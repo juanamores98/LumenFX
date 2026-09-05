@@ -31,9 +31,15 @@ namespace LumenFX
             get { return "Sun, moon and ambience balancing, filmic tone controls and adaptive shadow bias with presets."; }
         }
 
+        /// <summary>
+        /// Scene hosts created while the main menu is up die when the gameplay
+        /// scene loads, so the host is (re)created here for every map.
+        /// </summary>
         public override void OnLevelLoaded(LoadMode mode)
         {
             base.OnLevelLoaded(mode);
+
+            CreateHost();
             TunerRuntime.ApplyAll();
 
             UI.UuiButton.Register(
@@ -47,13 +53,14 @@ namespace LumenFX
         {
             base.OnLevelUnloading();
             UI.UuiButton.Unregister();
+            DestroyHosts();
         }
 
         public void OnEnabled()
         {
-            DestroyHosts();
-            _host = new GameObject(HostObjectName);
-            _host.AddComponent<TunerEngine>();
+            // Covers the case of enabling the mod while a map is already
+            // running; the gameplay scene replaces menu-time hosts anyway.
+            CreateHost();
 
             if (_patched)
             {
@@ -68,6 +75,13 @@ namespace LumenFX
         public void OnDisabled()
         {
             DestroyHosts();
+        }
+
+        private void CreateHost()
+        {
+            DestroyHosts();
+            _host = new GameObject(HostObjectName);
+            _host.AddComponent<Core.TunerEngine>();
         }
 
         private static void DestroyHosts()

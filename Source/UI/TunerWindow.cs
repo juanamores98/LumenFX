@@ -26,7 +26,7 @@ namespace LumenFX.UI
         private readonly LightState _state;
         private readonly Action _onChanged;
 
-        private Rect _rect = new Rect(180f, 160f, 540f, 440f);
+        private Rect _rect = new Rect(620f, 300f, 540f, 440f);
         private int _tab;
         private Vector2 _presetScroll;
         private string _presetName = "My look";
