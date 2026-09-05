@@ -23,6 +23,11 @@ namespace LumenFX.Core
             _open = false;
         }
 
+        internal static void OpenWindow()
+        {
+            _open = true;
+        }
+
         private void Start()
         {
             _windowId = GetInstanceID();

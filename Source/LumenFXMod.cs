@@ -35,6 +35,18 @@ namespace LumenFX
         {
             base.OnLevelLoaded(mode);
             TunerRuntime.ApplyAll();
+
+            UI.UuiButton.Register(
+                "LumenFX v2",
+                "Lighting, tone and shadow tuner (Ctrl+Alt+L)",
+                UI.TrayIcon.Make(),
+                show => Core.TunerEngine.OpenWindow());
+        }
+
+        public override void OnLevelUnloading()
+        {
+            base.OnLevelUnloading();
+            UI.UuiButton.Unregister();
         }
 
         public void OnEnabled()
