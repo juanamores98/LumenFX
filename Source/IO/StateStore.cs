@@ -20,6 +20,14 @@ namespace LumenFX.IO
         [XmlElement("moonStrength")] public float MoonStrength { get => Runtime.TunerRuntime.CurrentState.MoonStrength; set => Runtime.TunerRuntime.CurrentState.MoonStrength = Clamp(value, 0f, 2f); }
         [XmlElement("ambience")] public float Ambience { get => Runtime.TunerRuntime.CurrentState.Ambience; set => Runtime.TunerRuntime.CurrentState.Ambience = Clamp(value, 0f, 2f); }
         [XmlElement("warmth")] public float Warmth { get => Runtime.TunerRuntime.CurrentState.Warmth; set => Runtime.TunerRuntime.CurrentState.Warmth = Clamp(value, -1f, 1f); }
+        [XmlElement("sunTemp")] public float SunTemp { get => Runtime.TunerRuntime.CurrentState.SunTemp; set => Runtime.TunerRuntime.CurrentState.SunTemp = Clamp(value, -1f, 1f); }
+        [XmlElement("sunTint")] public float SunTint { get => Runtime.TunerRuntime.CurrentState.SunTint; set => Runtime.TunerRuntime.CurrentState.SunTint = Clamp(value, -1f, 1f); }
+        [XmlElement("moonTemp")] public float MoonTemp { get => Runtime.TunerRuntime.CurrentState.MoonTemp; set => Runtime.TunerRuntime.CurrentState.MoonTemp = Clamp(value, -1f, 1f); }
+        [XmlElement("moonTint")] public float MoonTint { get => Runtime.TunerRuntime.CurrentState.MoonTint; set => Runtime.TunerRuntime.CurrentState.MoonTint = Clamp(value, -1f, 1f); }
+        [XmlElement("skyTemp")] public float SkyTemp { get => Runtime.TunerRuntime.CurrentState.SkyTemp; set => Runtime.TunerRuntime.CurrentState.SkyTemp = Clamp(value, -1f, 1f); }
+        [XmlElement("skyTint")] public float SkyTint { get => Runtime.TunerRuntime.CurrentState.SkyTint; set => Runtime.TunerRuntime.CurrentState.SkyTint = Clamp(value, -1f, 1f); }
+        [XmlElement("globalTint")] public float GlobalTint { get => Runtime.TunerRuntime.CurrentState.GlobalTint; set => Runtime.TunerRuntime.CurrentState.GlobalTint = Clamp(value, -1f, 1f); }
+        [XmlElement("twilightTint")] public float TwilightTint { get => Runtime.TunerRuntime.CurrentState.TwilightTint; set => Runtime.TunerRuntime.CurrentState.TwilightTint = Clamp(value, -1f, 1f); }
         [XmlElement("skyTonemapping")] public bool SkyTonemapping { get => Runtime.TunerRuntime.CurrentState.SkyTonemapping; set => Runtime.TunerRuntime.CurrentState.SkyTonemapping = value; }
         [XmlElement("brightness")] public float Brightness { get => Runtime.TunerRuntime.CurrentState.Brightness; set => Runtime.TunerRuntime.CurrentState.Brightness = Clamp(value, -1f, 1f); }
         [XmlElement("contrast")] public float Contrast { get => Runtime.TunerRuntime.CurrentState.Contrast; set => Runtime.TunerRuntime.CurrentState.Contrast = Clamp(value, -1f, 1f); }

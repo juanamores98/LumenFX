@@ -4,6 +4,14 @@
   <moonStrength>0.5</moonStrength>
   <ambience>1</ambience>
   <warmth>0.4</warmth>
+  <sunTemp>0.55</sunTemp>
+  <sunTint>-0.5</sunTint>
+  <moonTemp>0.2</moonTemp>
+  <moonTint>-0.5</moonTint>
+  <skyTemp>-0.7</skyTemp>
+  <skyTint>-0.25</skyTint>
+  <globalTint>0.25</globalTint>
+  <twilightTint>-0.1</twilightTint>
   <skyTonemapping>true</skyTonemapping>
   <brightness>-0.4</brightness>
   <contrast>-0.7</contrast>

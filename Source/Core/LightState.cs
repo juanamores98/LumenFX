@@ -12,6 +12,17 @@ namespace LumenFX.Core
         public float Warmth = 0f;           // -1..1, cold..warm
         public bool SkyTonemapping = true;
 
+        // Advanced per-source color controls (own semantics: positive temp =
+        // warmer source, positive tint = greener source).
+        public float SunTemp = 0f;          // -1..1
+        public float SunTint = 0f;          // -1..1
+        public float MoonTemp = 0f;         // -1..1
+        public float MoonTint = 0f;         // -1..1
+        public float SkyTemp = 0f;          // -1..1 (applied to ambient light)
+        public float SkyTint = 0f;          // -1..1 (applied to ambient light)
+        public float GlobalTint = 0f;       // -1..1
+        public float TwilightTint = 0f;     // -1..1 (weighted around dawn/dusk)
+
         public float Brightness = 0f;       // -1..1
         public float Contrast = 0f;         // -1..1
         public float Gamma = 2.6f;          // 1.5..3.5

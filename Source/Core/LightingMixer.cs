@@ -6,8 +6,9 @@ namespace LumenFX.Core
     /// <summary>
     /// v2 lighting model. Instead of authoring a fixed palette, it resamples
     /// the game's own day/night gradients at a set of key times, scales the
-    /// daylight and night zones independently and applies a warmth shift to
-    /// every channel. The result is written back into the game gradients.
+    /// daylight and night zones independently, applies a warmth shift and
+    /// per-source temperature/tint offsets with its own response weights.
+    /// The result is written back into the game gradients.
     /// </summary>
     internal static class LightingMixer
     {
@@ -58,9 +59,29 @@ namespace LumenFX.Core
                 float gain = isDirectLight ? ZoneGain(time, state) : state.Ambience;
                 float warmth = isDirectLight ? state.Warmth : state.Warmth * 0.5f;
 
-                sampled.r = Mathf.Clamp01(sampled.r * gain * (1f + 0.18f * warmth));
-                sampled.g = Mathf.Clamp01(sampled.g * gain);
-                sampled.b = Mathf.Clamp01(sampled.b * gain * (1f - 0.18f * warmth));
+                // Own per-source offsets. Positive temperature warms a source
+                // (red up, blue down); positive tint pushes green; the
+                // twilight tint is weighted around dawn and dusk only.
+                float tempShift;
+                float tintShift;
+                if (isDirectLight)
+                {
+                    float dayness = Dayness(time);
+                    tempShift = 0.10f * (state.SunTemp * dayness - state.MoonTemp * (1f - dayness));
+                    tintShift = 0.06f * (state.SunTint * dayness + state.MoonTint * (1f - dayness));
+                    tempShift += 0.12f * state.TwilightTint * TwilightBand(time);
+                }
+                else
+                {
+                    tempShift = 0.08f * state.SkyTemp;
+                    tintShift = 0.05f * state.SkyTint;
+                }
+
+                tintShift += 0.05f * state.GlobalTint;
+
+                sampled.r = Mathf.Clamp01(sampled.r * gain * (1f + 0.18f * warmth) + tempShift);
+                sampled.g = Mathf.Clamp01(sampled.g * gain + tintShift);
+                sampled.b = Mathf.Clamp01(sampled.b * gain * (1f - 0.18f * warmth) - tempShift);
                 sampled.a = 1f;
 
                 keys[i] = new GradientColorKey(sampled, time);
@@ -84,29 +105,43 @@ namespace LumenFX.Core
         /// </summary>
         private static float ZoneGain(float time, LightState state)
         {
-            float dayness;
+            return Mathf.Lerp(state.MoonStrength, state.SunStrength, Dayness(time));
+        }
+
+        private static float Dayness(float time)
+        {
             if (time <= DawnStart)
             {
-                dayness = 0f;
-            }
-            else if (time < DawnEnd)
-            {
-                dayness = (time - DawnStart) / (DawnEnd - DawnStart);
-            }
-            else if (time <= DuskStart)
-            {
-                dayness = 1f;
-            }
-            else if (time < DuskEnd)
-            {
-                dayness = 1f - (time - DuskStart) / (DuskEnd - DuskStart);
-            }
-            else
-            {
-                dayness = 0f;
+                return 0f;
             }
 
-            return Mathf.Lerp(state.MoonStrength, state.SunStrength, dayness);
+            if (time < DawnEnd)
+            {
+                return (time - DawnStart) / (DawnEnd - DawnStart);
+            }
+
+            if (time <= DuskStart)
+            {
+                return 1f;
+            }
+
+            if (time < DuskEnd)
+            {
+                return 1f - (time - DuskStart) / (DuskEnd - DuskStart);
+            }
+
+            return 0f;
+        }
+
+        /// <summary>
+        /// Peaks at the dawn and dusk key times; used to weight the twilight
+        /// tint so it only affects the transition bands.
+        /// </summary>
+        private static float TwilightBand(float time)
+        {
+            float dawn = 1f - Mathf.Abs(time - 0.27f) / 0.09f;
+            float dusk = 1f - Mathf.Abs(time - 0.73f) / 0.09f;
+            return Mathf.Clamp01(Mathf.Max(dawn, dusk));
         }
     }
 }

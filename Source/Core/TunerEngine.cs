@@ -32,6 +32,7 @@ namespace LumenFX.Core
         {
             _windowId = GetInstanceID();
             EnsureBuiltInPresets();
+            PresetLibrary.ImportLegacyRelightPresets();
             StateStore.Load();
             _window = new TunerWindow(TunerRuntime.CurrentState, OnTuned);
             TunerRuntime.ApplyAll();
@@ -50,8 +51,34 @@ namespace LumenFX.Core
                 try
                 {
                     string path = System.IO.Path.Combine(PresetLibrary.Folder, PresetLibrary.Sanitize(name) + ".lumenfx.xml");
+                    bool upgradeNeeded = false;
                     if (System.IO.File.Exists(path))
                     {
+                        // Refresh a previously extracted built-in when the
+                        // shipped version gained fields the local copy lacks.
+                        string existing = System.IO.File.ReadAllText(path);
+                        string shipped;
+                        using (var probe = System.Reflection.Assembly.GetExecutingAssembly()
+                            .GetManifestResourceStream("LumenFX.BuiltIns." + name + ".lumenfx.xml"))
+                        {
+                            if (probe == null)
+                            {
+                                continue;
+                            }
+
+                            using (var reader = new System.IO.StreamReader(probe))
+                            {
+                                shipped = reader.ReadToEnd();
+                            }
+                        }
+
+                        upgradeNeeded = shipped.Contains("<sunTemp>") && !existing.Contains("<sunTemp>");
+                        if (!upgradeNeeded)
+                        {
+                            continue;
+                        }
+
+                        System.IO.File.WriteAllText(path, shipped);
                         continue;
                     }
 

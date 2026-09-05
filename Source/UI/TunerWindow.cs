@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using LumenFX.Core;
@@ -21,7 +21,7 @@ namespace LumenFX.UI
         private const float ValueX = 435f;
         private const float ValueWidth = 90f;
 
-        private static readonly string[] Tabs = { "Sun & Sky", "Tone & Shadows", "Presets" };
+        private static readonly string[] Tabs = { "Sun && Sky", "Advanced", "Tone && Shadows", "Presets" };
 
         private readonly LightState _state;
         private readonly Action _onChanged;
@@ -60,6 +60,10 @@ namespace LumenFX.UI
                 DrawSunSkyTab();
             }
             else if (_tab == 1)
+            {
+                DrawAdvancedTab();
+            }
+            else if (_tab == 2)
             {
                 DrawToneTab();
             }
@@ -109,6 +113,33 @@ namespace LumenFX.UI
                 _state.Ambience = 1f;
                 _state.Warmth = 0f;
                 _state.SkyTonemapping = true;
+                MarkDirty();
+            }
+        }
+
+        private void DrawAdvancedTab()
+        {
+            float y = 64f;
+
+            _state.SunTemp = Slider("Sun temp", _state.SunTemp, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SunTint = Slider("Sun tint", _state.SunTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.MoonTemp = Slider("Moon temp", _state.MoonTemp, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.MoonTint = Slider("Moon tint", _state.MoonTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SkyTemp = Slider("Sky temp", _state.SkyTemp, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SkyTint = Slider("Sky tint", _state.SkyTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.GlobalTint = Slider("Global tint", _state.GlobalTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.TwilightTint = Slider("Twilight tint", _state.TwilightTint, -1f, 1f, 0.05f, y); y += RowHeight;
+
+            if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Reset this tab"))
+            {
+                _state.SunTemp = 0f;
+                _state.SunTint = 0f;
+                _state.MoonTemp = 0f;
+                _state.MoonTint = 0f;
+                _state.SkyTemp = 0f;
+                _state.SkyTint = 0f;
+                _state.GlobalTint = 0f;
+                _state.TwilightTint = 0f;
                 MarkDirty();
             }
         }
@@ -193,6 +224,14 @@ namespace LumenFX.UI
             _state.MoonStrength = preset.MoonStrength;
             _state.Ambience = preset.Ambience;
             _state.Warmth = preset.Warmth;
+            _state.SunTemp = preset.SunTemp;
+            _state.SunTint = preset.SunTint;
+            _state.MoonTemp = preset.MoonTemp;
+            _state.MoonTint = preset.MoonTint;
+            _state.SkyTemp = preset.SkyTemp;
+            _state.SkyTint = preset.SkyTint;
+            _state.GlobalTint = preset.GlobalTint;
+            _state.TwilightTint = preset.TwilightTint;
             _state.SkyTonemapping = preset.SkyTonemapping;
             _state.Brightness = preset.Brightness;
             _state.Contrast = preset.Contrast;
@@ -213,6 +252,14 @@ namespace LumenFX.UI
                 MoonStrength = state.MoonStrength,
                 Ambience = state.Ambience,
                 Warmth = state.Warmth,
+                SunTemp = state.SunTemp,
+                SunTint = state.SunTint,
+                MoonTemp = state.MoonTemp,
+                MoonTint = state.MoonTint,
+                SkyTemp = state.SkyTemp,
+                SkyTint = state.SkyTint,
+                GlobalTint = state.GlobalTint,
+                TwilightTint = state.TwilightTint,
                 SkyTonemapping = state.SkyTonemapping,
                 Brightness = state.Brightness,
                 Contrast = state.Contrast,
