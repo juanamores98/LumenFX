@@ -1,5 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
+using System;
 using LumenFX.IO;
+using LumenFX.Presets;
 using LumenFX.Runtime;
 using LumenFX.UI;
 
@@ -24,9 +26,50 @@ namespace LumenFX.Core
         private void Start()
         {
             _windowId = GetInstanceID();
+            EnsureBuiltInPresets();
             StateStore.Load();
             _window = new TunerWindow(TunerRuntime.CurrentState, OnTuned);
             TunerRuntime.ApplyAll();
+        }
+
+        /// <summary>
+        /// Writes the presets shipped with the mod into the preset folder the
+        /// first time (or if the user deleted them).
+        /// </summary>
+        private static void EnsureBuiltInPresets()
+        {
+            string[] builtins = { "Vanilla", "Optimized" };
+
+            foreach (string name in builtins)
+            {
+                try
+                {
+                    string path = System.IO.Path.Combine(PresetLibrary.Folder, PresetLibrary.Sanitize(name) + ".lumenfx.xml");
+                    if (System.IO.File.Exists(path))
+                    {
+                        continue;
+                    }
+
+                    PresetLibrary.EnsureFolder();
+                    using (var stream = System.Reflection.Assembly.GetExecutingAssembly()
+                        .GetManifestResourceStream("LumenFX.BuiltIns." + name + ".lumenfx.xml"))
+                    {
+                        if (stream == null)
+                        {
+                            continue;
+                        }
+
+                        using (var reader = new System.IO.StreamReader(stream))
+                        {
+                            System.IO.File.WriteAllText(path, reader.ReadToEnd());
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    UnityEngine.Debug.LogException(e);
+                }
+            }
         }
 
         private static void OnTuned()

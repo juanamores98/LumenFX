@@ -25,6 +25,9 @@ propio de mezcla de luz y de bias adaptativo.
 
 **Presets**:
 - Guardar/cargar/borrar el look completo como XML (`.lumenfx.xml`).
+- **Presets incluidos**: `Vanilla` (todo neutro) y `Optimized` (look cálido
+  crepuscular de contraste alto). Se extraen a la carpeta de presets en el
+  primer arranque.
 - Estado persistente en `LumenFX2.xml`.
 
 ## Compatibilidad

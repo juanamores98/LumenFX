@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PresetDocument name="Optimized">
+  <sunStrength>1</sunStrength>
+  <moonStrength>0.5</moonStrength>
+  <ambience>1</ambience>
+  <warmth>0.4</warmth>
+  <skyTonemapping>true</skyTonemapping>
+  <brightness>-0.4</brightness>
+  <contrast>-0.7</contrast>
+  <gamma>3.15</gamma>
+  <adaptiveShadows>true</adaptiveShadows>
+  <biasScale>1</biasScale>
+  <softShadows>true</softShadows>
+</PresetDocument>

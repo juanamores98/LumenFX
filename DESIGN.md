@@ -45,6 +45,22 @@ Controles directos y su mapeo a `ColossalFramework.ToneMapping`:
 - Estado: `LumenFX2.xml` (raíz `lumenFx`, `schema="2"`), guardado al cambiar
   cualquier control del tuner.
 - Presets: XML `.lumenfx.xml` en `%LOCALAPPDATA%\Colossal Order\Cities_Skylines\ModConfig\LumenFXPresets`.
+- **Built-ins**: `Vanilla.lumenfx.xml` (todo neutro, gamma 2.2) y
+  `Optimized.lumenfx.xml`. Se extraen al primer arranque si no existen.
+
+### Traducción documentada del preset `Optimized`
+
+Valores de partida: un perfil de referencia personal del autor (mezzcla cálida
+crepuscular con contraste alto). Equivalencias usadas:
+
+| Origen (referencia personal) | v2 | Nota |
+|---|---|---|
+| Temperatura global cálida + tinte | `warmth 0.4` | desplazamiento R/B equivalente (~7 %) |
+| Menor relación noche/día | `moonStrength 0.5` | ratio noche/día ≈ 0.48 |
+| Brillo alto con divisor de intensidad | `brightness -0.4` | el rango propio satura; ajuste a ojo |
+| Contraste negativo | `contrast -0.7` | directo |
+| Gamma via fórmula `2.6·(((g+1)/4)+0.75)` con g=0.85 | `gamma 3.15` | 3.1525 redondeado |
+| Suavizado/bias por defecto | `adaptiveShadows true, biasScale 1, softShadows true` | |
 
 ## Arquitectura
 

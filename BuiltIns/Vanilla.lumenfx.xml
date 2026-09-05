@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PresetDocument name="Vanilla">
+  <sunStrength>1</sunStrength>
+  <moonStrength>1</moonStrength>
+  <ambience>1</ambience>
+  <warmth>0</warmth>
+  <skyTonemapping>true</skyTonemapping>
+  <brightness>0</brightness>
+  <contrast>0</contrast>
+  <gamma>2.2</gamma>
+  <adaptiveShadows>true</adaptiveShadows>
+  <biasScale>1</biasScale>
+  <softShadows>true</softShadows>
+</PresetDocument>

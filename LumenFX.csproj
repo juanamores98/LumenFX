@@ -24,6 +24,10 @@
         </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="BuiltIns\*.lumenfx.xml" />
+    </ItemGroup>
+
     <Target Name="DeployToModDirectory" AfterTargets="Build">
         <PropertyGroup>
             <DeployDir>$(LOCALAPPDATA)/Colossal Order/Cities_Skylines/Addons/Mods/LumenFX/</DeployDir>
