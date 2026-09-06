@@ -1,4 +1,4 @@
-﻿namespace LumenFX.Core
+namespace LumenFX.Core
 {
     /// <summary>
     /// v2 tuning state. Parameter names, ranges and defaults are owned by
@@ -30,7 +30,13 @@
         public bool ForceLowBias;           // keep shadows tight on the ground
         public float BiasScale = 1f;        // 0..2, scales the adaptive bias curve
         public bool SoftShadows = true;
+        public bool AdaptiveExposure = false; // own day/night exposure compensation
+        public float AdaptiveExposureGain = 0.5f; // 0..1
+        public float WindowX = 620f;
+        public float WindowY = 300f;
         public bool VanillaMode;            // suspend everything, game untouched
+
+        public bool LightingDirty = true;
 
         /// <summary>
         /// Neutral state: no gains, no color shifts, standard tone.
@@ -57,6 +63,9 @@
             ForceLowBias = false;
             BiasScale = 1f;
             SoftShadows = true;
+            AdaptiveExposure = false;
+            AdaptiveExposureGain = 0.5f;
+            LightingDirty = true;
         }
     }
 }

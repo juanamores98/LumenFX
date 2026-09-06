@@ -39,14 +39,27 @@ Controles directos y su mapeo a `ColossalFramework.ToneMapping`:
 - Respuesta lineal: `bias = lerp(0.05, 1, alturaNormalizada · lerp(1, 0.35, pitch)) · escala`,
   con clamp final [0.05, 2]. Sin curvas exponenciales.
 - Se aplica como postfix de Harmony en `DayNightProperties.UpdateLighting`.
+- **Rendimiento v2.1**: Caché estática de `CameraController` y `Camera` (sin `FindWithTag` en cada frame). Estrangulación analítica: el raycast solo se recalcula si la cámara se mueve más de 0.5 m, rota más de 0.5° o cada 20 ticks. Estructuras de raycast pre-inicializadas con cero allocaciones en el heap por frame.
+
+## Exposición adaptativa día/noche (v2.1)
+
+- Algoritmo analítico propio que compensa suavemente la iluminación nocturna y crepuscular sin requerir histogramas HDR por frame ni cómputo de GPU pesado.
+- Curva hermite evaluada a partir de `DayNightProperties.normalizedTimeOfDay`: calcula la distancia al mediodía (0.5) y aplica un factor multiplicador suave `1 + 0.4·gain·nightWeight` sobre la exposición capturada en `VanillaSnapshot`.
+- Se evalúa únicamente cuando la hora del día avanza de forma apreciable (delta >= 0.002) o cambian las opciones.
+- Controlable desde la pestaña "Tone & Shadows" del tuner (`adaptiveExposure` y `adaptiveExposureGain`).
 
 ## Estado y presets
 
-- Estado: `LumenFX2.xml` (raíz `lumenFx`, `schema="2"`), guardado al cambiar
-  cualquier control del tuner.
+- Estado: `LumenFX2.xml` (raíz `lumenFx`, `schema="2"`), con throttle de guardado a disco (1 segundo entre escrituras para evitar congelamientos en sliders) y guardado forzado al cerrar la ventana o salir de la escena.
 - Presets: XML `.lumenfx.xml` en `%LOCALAPPDATA%\Colossal Order\Cities_Skylines\ModConfig\LumenFXPresets`.
+- **Coordenadas de ventana**: `windowX` y `windowY` persistidas en el estado para restaurar la posición de la ventana del tuner con clamp a los límites de pantalla.
 - **Built-ins**: `Vanilla.lumenfx.xml` (todo neutro, gamma 2.2) y
   `Optimized.lumenfx.xml`. Se extraen al primer arranque si no existen.
+
+### Integración de Suite
+
+- Entry point expone `public static bool ApplySuiteSection(string xml)` y `public static string ExportSuiteSection()`.
+- Permite a SceneFX (coordinador) aplicar o exportar la sección `<lumenfx>` dentro de un perfil unificado `.suite.xml`.
 
 ### Traducción documentada del preset `Optimized`
 
@@ -64,9 +77,11 @@ crepuscular con contraste alto). Equivalencias usadas:
 
 ## Arquitectura
 
-- `Core/LightState` — estado completo del tuner.
-- `Core/LightingMixer` — modelo de mezcla (remuestreo + zonas + warmth).
+- `Core/LightState` — estado completo del tuner con dirty flag y coordenadas de ventana.
+- `Core/LightingMixer` — modelo de mezcla (remuestreo + zonas + warmth) con reflexión cacheada y chequeo dirty.
+- `Core/AdaptiveExposure` — compensación analítica de exposición día/noche.
 - `Core/TonemapProfile` — perfil filmic.
-- `Shadows/AdaptiveBias` + `GroundProbe` + `UpdateLightingPatch` — sombras.
-- `IO/StateStore`, `Presets/PresetLibrary` — persistencia propia.
-- `UI/TunerWindow` + `Core/TunerEngine` — tuner in-game (Ctrl+Alt+L).
+- `Shadows/AdaptiveBias` + `GroundProbe` + `UpdateLightingPatch` — sombras y bias adaptativo estrangulado.
+- `IO/StateStore`, `Presets/PresetLibrary` — persistencia propia con throttle.
+- `UI/TunerWindow` + `Core/TunerEngine` — tuner in-game (Ctrl+Alt+L) con estilo e identidad visual unificada.
+

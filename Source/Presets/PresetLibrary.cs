@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -37,7 +37,10 @@ namespace LumenFX.Presets
         [XmlElement("forceLowBias")] public bool ForceLowBias;
         [XmlElement("biasScale")] public float BiasScale = 1f;
         [XmlElement("softShadows")] public bool SoftShadows = true;
+        [XmlElement("adaptiveExposure")] public bool AdaptiveExposure = false;
+        [XmlElement("adaptiveExposureGain")] public float AdaptiveExposureGain = 0.5f;
     }
+
 
     internal static class PresetLibrary
     {

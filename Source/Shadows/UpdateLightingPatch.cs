@@ -1,28 +1,36 @@
 using Harmony;
+using LumenFX.Core;
 using LumenFX.Runtime;
 
 namespace LumenFX.Shadows
 {
     /// <summary>
-    /// Feeds the v2 adaptive bias into the main light whenever the game
-    /// refreshes its lighting.
+    /// Feeds the v2 adaptive bias into the main light and smooth day/night
+    /// adaptive exposure whenever the game refreshes its lighting.
     /// </summary>
     [HarmonyPatch(typeof(DayNightProperties))]
     [HarmonyPatch("UpdateLighting")]
     internal static class UpdateLightingPatch
     {
-        private static void Postfix()
+        private static void Postfix(DayNightProperties __instance)
         {
-            if (RenderManager.instance == null || RenderManager.instance.MainLight == null)
+            var state = TunerRuntime.CurrentState;
+            if (state == null || state.VanillaMode)
             {
                 return;
             }
 
-            var state = TunerRuntime.CurrentState;
-            if (state != null && state.AdaptiveShadows && !state.VanillaMode)
+            if (state.AdaptiveShadows && RenderManager.instance != null && RenderManager.instance.MainLight != null)
             {
                 RenderManager.instance.MainLight.shadowBias = AdaptiveBias.Compute(state);
+            }
+
+            if (state.AdaptiveExposure && __instance != null && VanillaSnapshot.Captured)
+            {
+                float factor = AdaptiveExposure.Compute(__instance.normalizedTimeOfDay, state.AdaptiveExposureGain);
+                __instance.m_Exposure = VanillaSnapshot.CapturedExposure * factor;
             }
         }
     }
 }
+

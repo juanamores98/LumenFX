@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using LumenFX.Core;
@@ -36,16 +36,32 @@ namespace LumenFX.UI
         {
             _state = state;
             _onChanged = onChanged;
+            float x = state.WindowX > 0f ? state.WindowX : 620f;
+            float y = state.WindowY > 0f ? state.WindowY : 300f;
+            if (Screen.width > 0 && Screen.height > 0)
+            {
+                x = Mathf.Clamp(x, 10f, Mathf.Max(10f, Screen.width - 550f));
+                y = Mathf.Clamp(y, 10f, Mathf.Max(10f, Screen.height - 480f));
+            }
+            _rect = new Rect(x, y, 540f, 470f);
         }
 
         internal void Draw(int id)
         {
+            float oldX = _rect.x;
+            float oldY = _rect.y;
             _rect = GUI.Window(id, _rect, DrawWindow, "LumenFX v2");
+            if (!Mathf.Approximately(oldX, _rect.x) || !Mathf.Approximately(oldY, _rect.y))
+            {
+                _state.WindowX = _rect.x;
+                _state.WindowY = _rect.y;
+                StateStore.Save(false);
+            }
         }
 
         private void DrawWindow(int id)
         {
-            GUI.DragWindow(new Rect(0f, 0f, 500f, 22f));
+            GUI.DragWindow(new Rect(0f, 0f, _rect.width - 30f, 22f));
             if (GUI.Button(new Rect(_rect.width - 26f, 4f, 22f, 18f), "x"))
             {
                 TunerEngine.CloseWindow();
@@ -95,10 +111,17 @@ namespace LumenFX.UI
             _dirty = true;
         }
 
+        private static float Section(string title, float y)
+        {
+            GUI.Label(new Rect(10f, y, 350f, 22f), "<b><color=#4FC3F7>" + title + "</color></b>");
+            return y + 24f;
+        }
+
         private void DrawSunSkyTab()
         {
-            float y = 64f;
+            float y = 58f;
 
+            y = Section("GLOBAL & MODE", y);
             _state.VanillaMode = Toggle("Vanilla mode (suspend LumenFX)", _state.VanillaMode, y); y += RowHeight;
 
             if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Restore vanilla now"))
@@ -108,8 +131,9 @@ namespace LumenFX.UI
                 MarkDirty();
                 return;
             }
-            y += RowHeight + 8f;
+            y += RowHeight + 6f;
 
+            y = Section("SUN & SKY GAIN", y);
             _state.SunStrength = Slider("Sun strength", _state.SunStrength, 0f, 2f, 0.05f, y); y += RowHeight;
             _state.MoonStrength = Slider("Moon strength", _state.MoonStrength, 0f, 2f, 0.05f, y); y += RowHeight;
             _state.Ambience = Slider("Ambience", _state.Ambience, 0f, 2f, 0.05f, y); y += RowHeight;
@@ -130,8 +154,9 @@ namespace LumenFX.UI
 
         private void DrawAdvancedTab()
         {
-            float y = 64f;
+            float y = 58f;
 
+            y = Section("SOURCE TEMPERATURE & TINT", y);
             _state.SunTemp = Slider("Sun temp", _state.SunTemp, -1f, 1f, 0.05f, y); y += RowHeight;
             _state.SunTint = Slider("Sun tint", _state.SunTint, -1f, 1f, 0.05f, y); y += RowHeight;
             _state.MoonTemp = Slider("Moon temp", _state.MoonTemp, -1f, 1f, 0.05f, y); y += RowHeight;
@@ -157,16 +182,24 @@ namespace LumenFX.UI
 
         private void DrawToneTab()
         {
-            float y = 64f;
+            float y = 58f;
 
+            y = Section("TONE MAPPING", y);
             _state.Brightness = Slider("Brightness", _state.Brightness, -1f, 1f, 0.05f, y); y += RowHeight;
             _state.Contrast = Slider("Contrast", _state.Contrast, -1f, 1f, 0.05f, y); y += RowHeight;
             _state.Gamma = Slider("Gamma", _state.Gamma, 1.5f, 3.5f, 0.05f, y); y += RowHeight;
 
+            y = Section("SHADOWS & EXPOSURE", y);
             _state.AdaptiveShadows = Toggle("Adaptive shadow bias", _state.AdaptiveShadows, y); y += RowHeight;
             _state.ForceLowBias = Toggle("Force low bias", _state.ForceLowBias, y); y += RowHeight;
             _state.BiasScale = Slider("Bias scale", _state.BiasScale, 0f, 2f, 0.05f, y); y += RowHeight;
             _state.SoftShadows = Toggle("Soft shadows", _state.SoftShadows, y); y += RowHeight;
+
+            _state.AdaptiveExposure = Toggle("Adaptive day/night exposure", _state.AdaptiveExposure, y); y += RowHeight;
+            if (_state.AdaptiveExposure)
+            {
+                _state.AdaptiveExposureGain = Slider("Exposure lift gain", _state.AdaptiveExposureGain, 0f, 1f, 0.05f, y); y += RowHeight;
+            }
 
             if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Reset this tab"))
             {
@@ -177,6 +210,8 @@ namespace LumenFX.UI
                 _state.ForceLowBias = false;
                 _state.BiasScale = 1f;
                 _state.SoftShadows = true;
+                _state.AdaptiveExposure = false;
+                _state.AdaptiveExposureGain = 0.5f;
                 MarkDirty();
             }
         }
@@ -253,6 +288,8 @@ namespace LumenFX.UI
             _state.ForceLowBias = preset.ForceLowBias;
             _state.BiasScale = preset.BiasScale;
             _state.SoftShadows = preset.SoftShadows;
+            _state.AdaptiveExposure = preset.AdaptiveExposure;
+            _state.AdaptiveExposureGain = preset.AdaptiveExposureGain;
             MarkDirty();
         }
 
@@ -282,6 +319,8 @@ namespace LumenFX.UI
                 ForceLowBias = state.ForceLowBias,
                 BiasScale = state.BiasScale,
                 SoftShadows = state.SoftShadows,
+                AdaptiveExposure = state.AdaptiveExposure,
+                AdaptiveExposureGain = state.AdaptiveExposureGain,
             };
         }
 

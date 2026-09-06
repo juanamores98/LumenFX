@@ -19,29 +19,69 @@ namespace LumenFX.Core
         private const float DuskStart = 0.68f;
         private const float DuskEnd = 0.80f;
 
-        internal static void Apply(LightState state)
+        private static FieldInfo _skyColorField;
+        private static FieldInfo _equatorColorField;
+        private static FieldInfo _groundColorField;
+        private static DayNightProperties _cachedDayNight;
+
+        public static void ClearCache()
         {
-            var dayNight = Object.FindObjectOfType<DayNightProperties>();
-            if (dayNight == null)
+            _cachedDayNight = null;
+        }
+
+        private static void EnsureFields()
+        {
+            if (_skyColorField != null)
             {
                 return;
             }
 
-            dayNight.m_LightColor = Resample(dayNight.m_LightColor, state, true);
-
             var ambientType = typeof(DayNightProperties.AmbientColor);
-            var ambient = dayNight.m_AmbientColor;
-            ambientType.GetField("m_SkyColor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(ambient, Resample(GetAmbient(ambientType, ambient, "m_SkyColor"), state, false));
-            ambientType.GetField("m_EquatorColor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(ambient, Resample(GetAmbient(ambientType, ambient, "m_EquatorColor"), state, false));
-            ambientType.GetField("m_GroundColor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(ambient, Resample(GetAmbient(ambientType, ambient, "m_GroundColor"), state, false));
-
-            dayNight.m_Tonemapping = state.SkyTonemapping;
+            _skyColorField = ambientType.GetField("m_SkyColor", BindingFlags.Instance | BindingFlags.NonPublic);
+            _equatorColorField = ambientType.GetField("m_EquatorColor", BindingFlags.Instance | BindingFlags.NonPublic);
+            _groundColorField = ambientType.GetField("m_GroundColor", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
-        private static Gradient GetAmbient(System.Type type, object instance, string field)
+        internal static void Apply(LightState state)
         {
-            return (Gradient)type.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(instance);
+            if (_cachedDayNight == null)
+            {
+                _cachedDayNight = Object.FindObjectOfType<DayNightProperties>();
+                if (_cachedDayNight == null)
+                {
+                    return;
+                }
+            }
+
+            _cachedDayNight.m_Tonemapping = state.SkyTonemapping;
+
+            if (!state.LightingDirty)
+            {
+                return;
+            }
+
+            EnsureFields();
+            _cachedDayNight.m_LightColor = Resample(_cachedDayNight.m_LightColor, state, true);
+
+            var ambient = _cachedDayNight.m_AmbientColor;
+            if (_skyColorField != null)
+            {
+                _skyColorField.SetValue(ambient, Resample((Gradient)_skyColorField.GetValue(ambient), state, false));
+            }
+
+            if (_equatorColorField != null)
+            {
+                _equatorColorField.SetValue(ambient, Resample((Gradient)_equatorColorField.GetValue(ambient), state, false));
+            }
+
+            if (_groundColorField != null)
+            {
+                _groundColorField.SetValue(ambient, Resample((Gradient)_groundColorField.GetValue(ambient), state, false));
+            }
+
+            state.LightingDirty = false;
         }
+
 
         private static Gradient Resample(Gradient source, LightState state, bool isDirectLight)
         {

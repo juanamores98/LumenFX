@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using LumenFX.IO;
 using LumenFX.Presets;
 using LumenFX.Runtime;
+using LumenFX.Shadows;
 using LumenFX.UI;
 
 namespace LumenFX.Core
@@ -21,11 +22,19 @@ namespace LumenFX.Core
         internal static void CloseWindow()
         {
             _open = false;
+            StateStore.SaveImmediate();
         }
 
         internal static void OpenWindow()
         {
             _open = true;
+        }
+
+        private void OnDestroy()
+        {
+            StateStore.SaveImmediate();
+            AdaptiveBias.ClearCache();
+            LightingMixer.ClearCache();
         }
 
         private void Start()
@@ -107,8 +116,9 @@ namespace LumenFX.Core
 
         private static void OnTuned()
         {
+            TunerRuntime.CurrentState.LightingDirty = true;
             TunerRuntime.ApplyAll();
-            StateStore.Save();
+            StateStore.Save(false);
         }
 
         private void Update()
@@ -116,7 +126,13 @@ namespace LumenFX.Core
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.L))
             {
                 _open = !_open;
+                if (!_open)
+                {
+                    StateStore.SaveImmediate();
+                }
             }
+
+            StateStore.CheckPendingSave();
         }
 
         private void OnGUI()

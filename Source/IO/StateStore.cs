@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -36,6 +36,10 @@ namespace LumenFX.IO
         [XmlElement("forceLowBias")] public bool ForceLowBias { get => Runtime.TunerRuntime.CurrentState.ForceLowBias; set => Runtime.TunerRuntime.CurrentState.ForceLowBias = value; }
         [XmlElement("biasScale")] public float BiasScale { get => Runtime.TunerRuntime.CurrentState.BiasScale; set => Runtime.TunerRuntime.CurrentState.BiasScale = Clamp(value, 0f, 2f); }
         [XmlElement("softShadows")] public bool SoftShadows { get => Runtime.TunerRuntime.CurrentState.SoftShadows; set => Runtime.TunerRuntime.CurrentState.SoftShadows = value; }
+        [XmlElement("adaptiveExposure")] public bool AdaptiveExposure { get => Runtime.TunerRuntime.CurrentState.AdaptiveExposure; set => Runtime.TunerRuntime.CurrentState.AdaptiveExposure = value; }
+        [XmlElement("adaptiveExposureGain")] public float AdaptiveExposureGain { get => Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain; set => Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain = Clamp(value, 0f, 1f); }
+        [XmlElement("windowX")] public float WindowX { get => Runtime.TunerRuntime.CurrentState.WindowX; set => Runtime.TunerRuntime.CurrentState.WindowX = value; }
+        [XmlElement("windowY")] public float WindowY { get => Runtime.TunerRuntime.CurrentState.WindowY; set => Runtime.TunerRuntime.CurrentState.WindowY = value; }
         [XmlElement("vanillaMode")] public bool VanillaMode { get => Runtime.TunerRuntime.CurrentState.VanillaMode; set => Runtime.TunerRuntime.CurrentState.VanillaMode = value; }
 
         private static float Clamp(float v, float min, float max)
@@ -48,6 +52,9 @@ namespace LumenFX.IO
     {
         private static readonly string FilePath =
             Path.Combine(DataLocation.localApplicationData, "LumenFX2.xml");
+
+        private static float _lastSaveTime = -10f;
+        private static bool _dirty;
 
         internal static void Load()
         {
@@ -69,8 +76,28 @@ namespace LumenFX.IO
             }
         }
 
-        internal static void Save()
+        internal static void Save(bool immediate = false)
         {
+            _dirty = true;
+            float now = Time.realtimeSinceStartup;
+            if (immediate || now - _lastSaveTime >= 1.0f)
+            {
+                SaveImmediate();
+            }
+        }
+
+        internal static void CheckPendingSave()
+        {
+            if (_dirty && Time.realtimeSinceStartup - _lastSaveTime >= 1.0f)
+            {
+                SaveImmediate();
+            }
+        }
+
+        internal static void SaveImmediate()
+        {
+            _dirty = false;
+            _lastSaveTime = Time.realtimeSinceStartup;
             try
             {
                 using (var writer = new StreamWriter(FilePath))
@@ -84,4 +111,5 @@ namespace LumenFX.IO
             }
         }
     }
+
 }

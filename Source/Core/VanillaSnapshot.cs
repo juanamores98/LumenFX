@@ -20,6 +20,7 @@ namespace LumenFX.Core
         private static float _gamma;
         private static float _boost;
         private static float _luminance;
+        private static float _exposure = 1f;
         private static float _filmicA;
         private static float _filmicB;
         private static float _filmicC;
@@ -33,6 +34,11 @@ namespace LumenFX.Core
         internal static bool Captured
         {
             get { return _captured; }
+        }
+
+        internal static float CapturedExposure
+        {
+            get { return _exposure; }
         }
 
         internal static void Capture()
@@ -49,6 +55,7 @@ namespace LumenFX.Core
             }
 
             _direct = dayNight.m_LightColor;
+            _exposure = dayNight.m_Exposure;
 
             var ambientType = typeof(DayNightProperties.AmbientColor);
             var ambient = dayNight.m_AmbientColor;
@@ -86,6 +93,8 @@ namespace LumenFX.Core
             var dayNight = Object.FindObjectOfType<DayNightProperties>();
             if (dayNight != null)
             {
+                dayNight.m_Exposure = _exposure;
+
                 if (_direct != null)
                 {
                     dayNight.m_LightColor = _direct;
