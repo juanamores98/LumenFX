@@ -12,7 +12,7 @@ namespace LumenFX.Core
     /// </summary>
     internal static class LightingMixer
     {
-        private static readonly float[] KeyTimes = { 0f, 0.2f, 0.4f, 0.6f, 0.8f, 1f };
+        private static readonly float[] KeyTimes = { 0f, 0.2f, 0.26f, 0.32f, 0.5f, 0.68f, 0.74f, 0.8f, 1f };
 
         private const float DawnStart = 0.20f;
         private const float DawnEnd = 0.32f;
@@ -61,22 +61,31 @@ namespace LumenFX.Core
             }
 
             EnsureFields();
-            _cachedDayNight.m_LightColor = Resample(_cachedDayNight.m_LightColor, state, true);
+            VanillaSnapshot.Capture();
+
+            Gradient sourceDirect = VanillaSnapshot.CapturedDirect;
+            if (sourceDirect != null)
+            {
+                _cachedDayNight.m_LightColor = Resample(sourceDirect, state, true);
+            }
 
             var ambient = _cachedDayNight.m_AmbientColor;
-            if (_skyColorField != null)
+            Gradient sourceSky = VanillaSnapshot.CapturedSky;
+            if (_skyColorField != null && sourceSky != null)
             {
-                _skyColorField.SetValue(ambient, Resample((Gradient)_skyColorField.GetValue(ambient), state, false));
+                _skyColorField.SetValue(ambient, Resample(sourceSky, state, false));
             }
 
-            if (_equatorColorField != null)
+            Gradient sourceEquator = VanillaSnapshot.CapturedEquator;
+            if (_equatorColorField != null && sourceEquator != null)
             {
-                _equatorColorField.SetValue(ambient, Resample((Gradient)_equatorColorField.GetValue(ambient), state, false));
+                _equatorColorField.SetValue(ambient, Resample(sourceEquator, state, false));
             }
 
-            if (_groundColorField != null)
+            Gradient sourceGround = VanillaSnapshot.CapturedGround;
+            if (_groundColorField != null && sourceGround != null)
             {
-                _groundColorField.SetValue(ambient, Resample((Gradient)_groundColorField.GetValue(ambient), state, false));
+                _groundColorField.SetValue(ambient, Resample(sourceGround, state, false));
             }
 
             state.LightingDirty = false;

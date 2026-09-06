@@ -12,6 +12,8 @@ namespace LumenFX.Shadows
     [HarmonyPatch("UpdateLighting")]
     internal static class UpdateLightingPatch
     {
+        private static bool _adaptiveExposureActive;
+
         private static void Postfix(DayNightProperties __instance)
         {
             var state = TunerRuntime.CurrentState;
@@ -25,11 +27,25 @@ namespace LumenFX.Shadows
                 RenderManager.instance.MainLight.shadowBias = AdaptiveBias.Compute(state);
             }
 
+            bool exposureApplied = false;
             if (state.AdaptiveExposure && __instance != null && VanillaSnapshot.Captured)
             {
                 float factor = AdaptiveExposure.Compute(__instance.normalizedTimeOfDay, state.AdaptiveExposureGain);
                 __instance.m_Exposure = VanillaSnapshot.CapturedExposure * factor;
+                exposureApplied = true;
             }
+
+            if (_adaptiveExposureActive && !exposureApplied)
+            {
+                if (__instance != null && VanillaSnapshot.Captured)
+                {
+                    __instance.m_Exposure = VanillaSnapshot.CapturedExposure;
+                }
+
+                AdaptiveExposure.Reset();
+            }
+
+            _adaptiveExposureActive = exposureApplied;
         }
     }
 }

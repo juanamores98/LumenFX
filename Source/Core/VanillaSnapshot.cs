@@ -41,6 +41,26 @@ namespace LumenFX.Core
             get { return _exposure; }
         }
 
+        internal static Gradient CapturedDirect
+        {
+            get { return _direct; }
+        }
+
+        internal static Gradient CapturedSky
+        {
+            get { return _sky; }
+        }
+
+        internal static Gradient CapturedEquator
+        {
+            get { return _equator; }
+        }
+
+        internal static Gradient CapturedGround
+        {
+            get { return _ground; }
+        }
+
         internal static void ResetCapture()
         {
             _captured = false;

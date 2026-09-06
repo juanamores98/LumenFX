@@ -18,6 +18,7 @@
         <Reference Include="ColossalManaged" />
         <Reference Include="ICities" />
         <Reference Include="UnityEngine" />
+        <Reference Include="System.Xml" />
         <Reference Include="0Harmony">
             <HintPath>lib\0Harmony.dll</HintPath>
             <Private>true</Private>

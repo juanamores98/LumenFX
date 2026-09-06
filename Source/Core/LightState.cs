@@ -25,7 +25,7 @@ namespace LumenFX.Core
 
         public float Brightness = 0f;       // -1..1
         public float Contrast = 0f;         // -1..1
-        public float Gamma = 2.6f;          // 1.5..3.5
+        public float Gamma = 2.2f;          // 1.5..3.5
         public bool AdaptiveShadows = true;
         public bool ForceLowBias;           // keep shadows tight on the ground
         public float BiasScale = 1f;        // 0..2, scales the adaptive bias curve

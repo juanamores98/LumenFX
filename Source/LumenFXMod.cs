@@ -17,9 +17,9 @@ namespace LumenFX
         private const string HarmonyId = "com.juanamores98.lumenfx2.bias";
 
         private static bool _patched;
+        private static HarmonyInstance _harmony;
 
         private GameObject _host;
-        private HarmonyInstance _harmony;
 
         public string Name
         {
