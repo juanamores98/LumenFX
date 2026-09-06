@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using LumenFX.Core;
 
 namespace LumenFX.Shadows
@@ -33,6 +33,13 @@ namespace LumenFX.Shadows
             float response = heightTerm * Mathf.Lerp(1f, PitchFloor, pitch);
 
             float bias = Mathf.Lerp(BiasFloor, 1f, response) * state.BiasScale;
+
+            if (state.ForceLowBias)
+            {
+                // Keep the bias tight so ground shadows stay crisp even when
+                // the camera climbs.
+                bias = Mathf.Min(bias, 0.45f) * 0.75f;
+            }
             return Mathf.Clamp(bias, BiasFloor, BiasCeiling);
         }
     }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -34,6 +34,7 @@ namespace LumenFX.Presets
         [XmlElement("contrast")] public float Contrast = 0f;
         [XmlElement("gamma")] public float Gamma = 2.6f;
         [XmlElement("adaptiveShadows")] public bool AdaptiveShadows = true;
+        [XmlElement("forceLowBias")] public bool ForceLowBias;
         [XmlElement("biasScale")] public float BiasScale = 1f;
         [XmlElement("softShadows")] public bool SoftShadows = true;
     }
@@ -97,8 +98,8 @@ namespace LumenFX.Presets
 
         /// <summary>
         /// Imports legacy Relight preset files (.light, "key = value" text
-        /// format) found on this machine — local preset folders and subscribed
-        /// Workshop items — converting them to the v2 preset schema. The
+        /// format) found on this machine â€” local preset folders and subscribed
+        /// Workshop items â€” converting them to the v2 preset schema. The
         /// original files are left untouched. Idempotent: already-imported
         /// names are skipped.
         /// </summary>
@@ -231,6 +232,7 @@ namespace LumenFX.Presets
                 Contrast = Mathf.Clamp(v[12], -1f, 1f),
                 Gamma = Mathf.Clamp(2.6f * (((v[11] + 1f) / 4f) + 0.75f), 1.5f, 3.5f),
                 AdaptiveShadows = true,
+                ForceLowBias = false,
                 BiasScale = 1f,
                 SoftShadows = true,
             };

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -33,6 +33,7 @@ namespace LumenFX.IO
         [XmlElement("contrast")] public float Contrast { get => Runtime.TunerRuntime.CurrentState.Contrast; set => Runtime.TunerRuntime.CurrentState.Contrast = Clamp(value, -1f, 1f); }
         [XmlElement("gamma")] public float Gamma { get => Runtime.TunerRuntime.CurrentState.Gamma; set => Runtime.TunerRuntime.CurrentState.Gamma = Clamp(value, 1.5f, 3.5f); }
         [XmlElement("adaptiveShadows")] public bool AdaptiveShadows { get => Runtime.TunerRuntime.CurrentState.AdaptiveShadows; set => Runtime.TunerRuntime.CurrentState.AdaptiveShadows = value; }
+        [XmlElement("forceLowBias")] public bool ForceLowBias { get => Runtime.TunerRuntime.CurrentState.ForceLowBias; set => Runtime.TunerRuntime.CurrentState.ForceLowBias = value; }
         [XmlElement("biasScale")] public float BiasScale { get => Runtime.TunerRuntime.CurrentState.BiasScale; set => Runtime.TunerRuntime.CurrentState.BiasScale = Clamp(value, 0f, 2f); }
         [XmlElement("softShadows")] public bool SoftShadows { get => Runtime.TunerRuntime.CurrentState.SoftShadows; set => Runtime.TunerRuntime.CurrentState.SoftShadows = value; }
 

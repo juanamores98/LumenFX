@@ -72,7 +72,8 @@ namespace LumenFX.Core
                             }
                         }
 
-                        upgradeNeeded = shipped.Contains("<sunTemp>") && !existing.Contains("<sunTemp>");
+                        upgradeNeeded = (shipped.Contains("<sunTemp>") && !existing.Contains("<sunTemp>"))
+                            || (shipped.Contains("<forceLowBias>") && !existing.Contains("<forceLowBias>"));
                         if (!upgradeNeeded)
                         {
                             continue;

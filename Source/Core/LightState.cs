@@ -1,4 +1,4 @@
-namespace LumenFX.Core
+﻿namespace LumenFX.Core
 {
     /// <summary>
     /// v2 tuning state. Parameter names, ranges and defaults are owned by
@@ -27,6 +27,7 @@ namespace LumenFX.Core
         public float Contrast = 0f;         // -1..1
         public float Gamma = 2.6f;          // 1.5..3.5
         public bool AdaptiveShadows = true;
+        public bool ForceLowBias;        // keep shadows tight on the ground
         public float BiasScale = 1f;        // 0..2
         public bool SoftShadows = true;
     }

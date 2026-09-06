@@ -153,6 +153,7 @@ namespace LumenFX.UI
             _state.Gamma = Slider("Gamma", _state.Gamma, 1.5f, 3.5f, 0.05f, y); y += RowHeight;
 
             _state.AdaptiveShadows = Toggle("Adaptive shadow bias", _state.AdaptiveShadows, y); y += RowHeight;
+            _state.ForceLowBias = Toggle("Force low bias", _state.ForceLowBias, y); y += RowHeight;
             _state.BiasScale = Slider("Bias scale", _state.BiasScale, 0f, 2f, 0.05f, y); y += RowHeight;
             _state.SoftShadows = Toggle("Soft shadows", _state.SoftShadows, y); y += RowHeight;
 
@@ -162,6 +163,7 @@ namespace LumenFX.UI
                 _state.Contrast = 0f;
                 _state.Gamma = 2.6f;
                 _state.AdaptiveShadows = true;
+                _state.ForceLowBias = false;
                 _state.BiasScale = 1f;
                 _state.SoftShadows = true;
                 MarkDirty();
@@ -237,6 +239,7 @@ namespace LumenFX.UI
             _state.Contrast = preset.Contrast;
             _state.Gamma = preset.Gamma;
             _state.AdaptiveShadows = preset.AdaptiveShadows;
+            _state.ForceLowBias = preset.ForceLowBias;
             _state.BiasScale = preset.BiasScale;
             _state.SoftShadows = preset.SoftShadows;
             MarkDirty();
@@ -265,6 +268,7 @@ namespace LumenFX.UI
                 Contrast = state.Contrast,
                 Gamma = state.Gamma,
                 AdaptiveShadows = state.AdaptiveShadows,
+                ForceLowBias = state.ForceLowBias,
                 BiasScale = state.BiasScale,
                 SoftShadows = state.SoftShadows,
             };
