@@ -41,6 +41,15 @@ namespace LumenFX.Core
             get { return _exposure; }
         }
 
+        internal static void ResetCapture()
+        {
+            _captured = false;
+            _direct = null;
+            _sky = null;
+            _equator = null;
+            _ground = null;
+        }
+
         internal static void Capture()
         {
             if (_captured)

@@ -35,6 +35,7 @@ namespace LumenFX.Core
             StateStore.SaveImmediate();
             AdaptiveBias.ClearCache();
             LightingMixer.ClearCache();
+            VanillaSnapshot.ResetCapture();
         }
 
         private void Start()

@@ -32,6 +32,15 @@ namespace LumenFX
         }
 
         /// <summary>
+        /// True while this mod owns the camera tonemapping component, so
+        /// SceneFX can defer its own tone writes to this one.
+        /// </summary>
+        public static bool ToneWriterActive
+        {
+            get { return _patched; }
+        }
+
+        /// <summary>
         /// Scene hosts created while the main menu is up die when the gameplay
         /// scene loads, so the host is (re)created here for every map.
         /// </summary>
@@ -75,6 +84,13 @@ namespace LumenFX
         public void OnDisabled()
         {
             DestroyHosts();
+
+            if (_patched && _harmony != null)
+            {
+                _harmony.UnpatchAll(HarmonyId);
+                _harmony = null;
+                _patched = false;
+            }
         }
 
         private void CreateHost()
