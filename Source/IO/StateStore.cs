@@ -36,6 +36,7 @@ namespace LumenFX.IO
         [XmlElement("forceLowBias")] public bool ForceLowBias { get => Runtime.TunerRuntime.CurrentState.ForceLowBias; set => Runtime.TunerRuntime.CurrentState.ForceLowBias = value; }
         [XmlElement("biasScale")] public float BiasScale { get => Runtime.TunerRuntime.CurrentState.BiasScale; set => Runtime.TunerRuntime.CurrentState.BiasScale = Clamp(value, 0f, 2f); }
         [XmlElement("softShadows")] public bool SoftShadows { get => Runtime.TunerRuntime.CurrentState.SoftShadows; set => Runtime.TunerRuntime.CurrentState.SoftShadows = value; }
+        [XmlElement("vanillaMode")] public bool VanillaMode { get => Runtime.TunerRuntime.CurrentState.VanillaMode; set => Runtime.TunerRuntime.CurrentState.VanillaMode = value; }
 
         private static float Clamp(float v, float min, float max)
         {

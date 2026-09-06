@@ -19,7 +19,7 @@ namespace LumenFX.Shadows
             }
 
             var state = TunerRuntime.CurrentState;
-            if (state != null && state.AdaptiveShadows)
+            if (state != null && state.AdaptiveShadows && !state.VanillaMode)
             {
                 RenderManager.instance.MainLight.shadowBias = AdaptiveBias.Compute(state);
             }

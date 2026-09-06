@@ -99,6 +99,17 @@ namespace LumenFX.UI
         {
             float y = 64f;
 
+            _state.VanillaMode = Toggle("Vanilla mode (suspend LumenFX)", _state.VanillaMode, y); y += RowHeight;
+
+            if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Restore vanilla now"))
+            {
+                _state.ResetToNeutral();
+                TunerRuntime.RestoreVanilla();
+                MarkDirty();
+                return;
+            }
+            y += RowHeight + 8f;
+
             _state.SunStrength = Slider("Sun strength", _state.SunStrength, 0f, 2f, 0.05f, y); y += RowHeight;
             _state.MoonStrength = Slider("Moon strength", _state.MoonStrength, 0f, 2f, 0.05f, y); y += RowHeight;
             _state.Ambience = Slider("Ambience", _state.Ambience, 0f, 2f, 0.05f, y); y += RowHeight;

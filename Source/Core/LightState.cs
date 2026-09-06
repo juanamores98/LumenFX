@@ -27,8 +27,36 @@
         public float Contrast = 0f;         // -1..1
         public float Gamma = 2.6f;          // 1.5..3.5
         public bool AdaptiveShadows = true;
-        public bool ForceLowBias;        // keep shadows tight on the ground
-        public float BiasScale = 1f;        // 0..2
+        public bool ForceLowBias;           // keep shadows tight on the ground
+        public float BiasScale = 1f;        // 0..2, scales the adaptive bias curve
         public bool SoftShadows = true;
+        public bool VanillaMode;            // suspend everything, game untouched
+
+        /// <summary>
+        /// Neutral state: no gains, no color shifts, standard tone.
+        /// </summary>
+        internal void ResetToNeutral()
+        {
+            SunStrength = 1f;
+            MoonStrength = 1f;
+            Ambience = 1f;
+            Warmth = 0f;
+            SunTemp = 0f;
+            SunTint = 0f;
+            MoonTemp = 0f;
+            MoonTint = 0f;
+            SkyTemp = 0f;
+            SkyTint = 0f;
+            GlobalTint = 0f;
+            TwilightTint = 0f;
+            SkyTonemapping = true;
+            Brightness = 0f;
+            Contrast = 0f;
+            Gamma = 2.2f;
+            AdaptiveShadows = true;
+            ForceLowBias = false;
+            BiasScale = 1f;
+            SoftShadows = true;
+        }
     }
 }

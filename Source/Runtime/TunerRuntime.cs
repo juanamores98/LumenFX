@@ -18,9 +18,25 @@ namespace LumenFX.Runtime
 
         public static void ApplyAll()
         {
+            if (_state.VanillaMode)
+            {
+                VanillaSnapshot.Restore();
+                return;
+            }
+
+            VanillaSnapshot.Capture();
             LightingMixer.Apply(_state);
             TonemapProfile.Apply(_state);
             QualitySettings.shadows = _state.SoftShadows ? ShadowQuality.All : ShadowQuality.HardOnly;
+        }
+
+        /// <summary>
+        /// Returns every touched component to the exact state the game
+        /// shipped with.
+        /// </summary>
+        public static void RestoreVanilla()
+        {
+            VanillaSnapshot.Restore();
         }
     }
 }
