@@ -26,22 +26,14 @@ namespace LumenFX.UI
         private readonly LightState _state;
         private readonly Action _onChanged;
 
-        /// <summary>
-        /// Alto que ocupo el contenido de la pestana la ultima vez que se dibujo.
-        /// </summary>
-        /// <remarks>
-        /// La ventana tenia un alto fijo. Segun la pestana, lo ultimo —que suele ser un boton—
-        /// se quedaba fuera del recorte y no habia forma de pulsarlo. Medirlo al dibujar y
-        /// ajustar en el siguiente fotograma cuesta un fotograma de retraso y ningun numero
-        /// que mantener a mano.
-        /// </remarks>
-        private float _contentHeight;
-
         private Rect _rect = new Rect(620f, 300f, 540f, 440f);
         private int _tab;
         private Vector2 _presetScroll;
         private string _presetName = "My look";
-        private List<PresetDocument> _presets = new List<PresetDocument>();
+        // Nula a proposito: la pestana la carga la primera vez que se abre. Arrancarla como
+        // lista vacia dejaba sin disparar la carga perezosa de mas abajo, y el listado se veia
+        // en blanco hasta pulsar Refresh a mano.
+        private List<PresetDocument> _presets;
 
         internal TunerWindow(LightState state, Action onChanged)
         {
@@ -61,12 +53,6 @@ namespace LumenFX.UI
         {
             float oldX = _rect.x;
             float oldY = _rect.y;
-            // Que quepa la pestana que se este viendo, sin salirse de la pantalla.
-            if (_contentHeight > 0f)
-            {
-                _rect.height = Mathf.Min(_contentHeight, Screen.height - 60f);
-            }
-
             _rect = GUI.Window(id, _rect, DrawWindow, "LumenFX v2");
             if (!Mathf.Approximately(oldX, _rect.x) || !Mathf.Approximately(oldY, _rect.y))
             {
@@ -177,7 +163,6 @@ namespace LumenFX.UI
                 _state.MoonPower = 0f;
                 MarkDirty();
             }
-            _contentHeight = y + 34f;
         }
 
         private void DrawAdvancedTab()
@@ -206,7 +191,6 @@ namespace LumenFX.UI
                 _state.TwilightTint = 0f;
                 MarkDirty();
             }
-            _contentHeight = y + 34f;
         }
 
         private void DrawToneTab()
@@ -243,7 +227,6 @@ namespace LumenFX.UI
                 _state.AdaptiveExposureGain = 0.5f;
                 MarkDirty();
             }
-            _contentHeight = y + 34f;
         }
 
         private void DrawPresetsTab()
@@ -306,7 +289,6 @@ namespace LumenFX.UI
                 PresetLibrary.Save(DocumentFromState(_presetName));
                 _presets = PresetLibrary.LoadAll();
             }
-            _contentHeight = y + 34f;
         }
 
         private void ApplyPreset(PresetDocument preset)
@@ -367,10 +349,38 @@ namespace LumenFX.UI
             };
         }
 
+        /// <summary>
+        /// Un deslizador que solo escribe cuando el usuario lo mueve.
+        /// </summary>
+        /// <remarks>
+        /// <b>Que hacia mal.</b> Redondeaba el valor al paso mas cercano y lo comparaba con el
+        /// actual; si no coincidian, lo escribia. Como un valor cargado de un preset casi nunca
+        /// cae justo en un multiplo del paso, el deslizador reescribia la configuracion sola
+        /// nada mas abrir la ventana. Medido: la receta del usuario entraba con densidad
+        /// 0.00006, ruido 0.51 y distancia 2852, y la ventana los dejaba en 0.00005, 0.52 y
+        /// 2850 sin que nadie tocara nada. Ademas eso disparaba un guardado y una aplicacion
+        /// cada vez, lo que se notaba como tirones.
+        ///
+        /// <b>Como se arregla.</b> IMGUI ya avisa de si un control cambio por accion del
+        /// usuario: <c>GUI.changed</c>. Se aisla alrededor del control y solo entonces se
+        /// redondea y se escribe. Sin interaccion, el deslizador solo dibuja.
+        /// </remarks>
         private float Slider(string label, float value, float min, float max, float step, float y)
         {
             GUI.Label(new Rect(10f, y, LabelWidth, 24f), label);
+
+            bool changedBefore = GUI.changed;
+            GUI.changed = false;
             float raw = GUI.HorizontalSlider(new Rect(SliderX, y + 3f, SliderWidth, 22f), value, min, max);
+            bool moved = GUI.changed;
+            GUI.changed = changedBefore || moved;
+
+            if (!moved)
+            {
+                GUI.Label(new Rect(ValueX, y, ValueWidth, 24f), value.ToString("0.00"));
+                return value;
+            }
+
             float snapped = Mathf.Round(raw / step) * step;
             GUI.Label(new Rect(ValueX, y, ValueWidth, 24f), snapped.ToString("0.00"));
             if (!Mathf.Approximately(snapped, value))

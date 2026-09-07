@@ -42,7 +42,11 @@ namespace LumenFX.Presets
             "<forceLowBias>false</forceLowBias>" +
             "<biasScale>1</biasScale>" +
             "<warmth>0.4</warmth>" +
-            "<moonStrength>0.5</moonStrength>" +
+            "<sunStrength>1</sunStrength>" +
+            "<moonStrength>0.745</moonStrength>" +
+            "<ambience>1</ambience>" +
+            "<sunPower>5.5</sunPower>" +
+            "<moonPower>6</moonPower>" +
             "<adaptiveShadows>true</adaptiveShadows>" +
             "<adaptiveExposure>true</adaptiveExposure>" +
             "<adaptiveExposureGain>1</adaptiveExposureGain>" +
