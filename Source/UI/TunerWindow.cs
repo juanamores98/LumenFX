@@ -198,7 +198,7 @@ namespace LumenFX.UI
             float y = 58f;
 
             y = Section("TONE MAPPING", y);
-            _state.Brightness = Slider("Brightness", _state.Brightness, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.Brightness = Slider("Brightness", _state.Brightness, -1f, 4f, 0.05f, y); y += RowHeight;
             _state.Contrast = Slider("Contrast", _state.Contrast, -1f, 1f, 0.05f, y); y += RowHeight;
             _state.Gamma = Slider("Gamma", _state.Gamma, 1.5f, 3.5f, 0.05f, y); y += RowHeight;
 

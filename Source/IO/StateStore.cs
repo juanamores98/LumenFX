@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -29,7 +29,7 @@ namespace LumenFX.IO
         [XmlElement("globalTint")] public float GlobalTint { get => Runtime.TunerRuntime.CurrentState.GlobalTint; set => Runtime.TunerRuntime.CurrentState.GlobalTint = Clamp(value, -1f, 1f); }
         [XmlElement("twilightTint")] public float TwilightTint { get => Runtime.TunerRuntime.CurrentState.TwilightTint; set => Runtime.TunerRuntime.CurrentState.TwilightTint = Clamp(value, -1f, 1f); }
         [XmlElement("skyTonemapping")] public bool SkyTonemapping { get => Runtime.TunerRuntime.CurrentState.SkyTonemapping; set => Runtime.TunerRuntime.CurrentState.SkyTonemapping = value; }
-        [XmlElement("brightness")] public float Brightness { get => Runtime.TunerRuntime.CurrentState.Brightness; set => Runtime.TunerRuntime.CurrentState.Brightness = Clamp(value, -1f, 1f); }
+        [XmlElement("brightness")] public float Brightness { get => Runtime.TunerRuntime.CurrentState.Brightness; set => Runtime.TunerRuntime.CurrentState.Brightness = Clamp(value, -1f, 4f); }
         [XmlElement("contrast")] public float Contrast { get => Runtime.TunerRuntime.CurrentState.Contrast; set => Runtime.TunerRuntime.CurrentState.Contrast = Clamp(value, -1f, 1f); }
         [XmlElement("gamma")] public float Gamma { get => Runtime.TunerRuntime.CurrentState.Gamma; set => Runtime.TunerRuntime.CurrentState.Gamma = Clamp(value, 1.5f, 3.5f); }
         [XmlElement("adaptiveShadows")] public bool AdaptiveShadows { get => Runtime.TunerRuntime.CurrentState.AdaptiveShadows; set => Runtime.TunerRuntime.CurrentState.AdaptiveShadows = value; }

@@ -1,4 +1,4 @@
-namespace LumenFX.Core
+﻿namespace LumenFX.Core
 {
     /// <summary>
     /// v2 tuning state. Parameter names, ranges and defaults are owned by
@@ -23,7 +23,7 @@ namespace LumenFX.Core
         public float GlobalTint = 0f;       // -1..1
         public float TwilightTint = 0f;     // -1..1 (weighted around dawn/dusk)
 
-        public float Brightness = 0f;       // -1..1
+        public float Brightness = 0f;       // -1..4 (por encima de 1, tramo ancho)
         public float Contrast = 0f;         // -1..1
         public float Gamma = 2.2f;          // 1.5..3.5
         public bool AdaptiveShadows = true;
