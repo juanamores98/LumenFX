@@ -78,22 +78,28 @@ namespace LumenFX.Core
             // de escribir no basta, el campo conservaria el ultimo valor puesto hasta recargar.
             VanillaSnapshot.Capture();
 
-            if (state.SkyRayleigh > 0f)
+            // La dispersión del cielo es del tema del mapa. Si hay un gestor de temas
+            // administrándola, estos dos controles se quedan quietos: escribirlos dejaría
+            // valores ajenos dentro del tema que el usuario guarde después.
+            if (!ThemeOwnership.AtmosphereIsManaged)
             {
-                _cachedDayNight.m_RayleighScattering = Mathf.Clamp(state.SkyRayleigh, 0.01f, 5f);
-            }
-            else if (VanillaSnapshot.Captured)
-            {
-                _cachedDayNight.m_RayleighScattering = VanillaSnapshot.CapturedRayleigh;
-            }
+                if (state.SkyRayleigh > 0f)
+                {
+                    _cachedDayNight.m_RayleighScattering = Mathf.Clamp(state.SkyRayleigh, 0.01f, 5f);
+                }
+                else if (VanillaSnapshot.Captured)
+                {
+                    _cachedDayNight.m_RayleighScattering = VanillaSnapshot.CapturedRayleigh;
+                }
 
-            if (state.SkyMie > 0f)
-            {
-                _cachedDayNight.m_MieScattering = Mathf.Clamp(state.SkyMie, 0.01f, 5f);
-            }
-            else if (VanillaSnapshot.Captured)
-            {
-                _cachedDayNight.m_MieScattering = VanillaSnapshot.CapturedMie;
+                if (state.SkyMie > 0f)
+                {
+                    _cachedDayNight.m_MieScattering = Mathf.Clamp(state.SkyMie, 0.01f, 5f);
+                }
+                else if (VanillaSnapshot.Captured)
+                {
+                    _cachedDayNight.m_MieScattering = VanillaSnapshot.CapturedMie;
+                }
             }
 
             if (state.SunPower > 0f)

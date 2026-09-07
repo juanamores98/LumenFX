@@ -154,9 +154,15 @@ namespace LumenFX.Core
             var dayNight = Object.FindObjectOfType<DayNightProperties>();
             if (dayNight != null)
             {
-                dayNight.m_Exposure = _exposure;
-                dayNight.m_RayleighScattering = _rayleigh;
-                dayNight.m_MieScattering = _mie;
+                // Lo que administra el gestor de temas no se repone: lo capturado puede ser
+                // de antes de que el tema se aplicara, y reponerlo lo borraría.
+                if (!ThemeOwnership.AtmosphereIsManaged)
+                {
+                    dayNight.m_Exposure = _exposure;
+                    dayNight.m_RayleighScattering = _rayleigh;
+                    dayNight.m_MieScattering = _mie;
+                }
+
                 dayNight.m_SunIntensity = _sunIntensity;
                 dayNight.m_MoonIntensity = _moonIntensity;
 
