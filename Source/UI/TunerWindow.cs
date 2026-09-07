@@ -141,6 +141,12 @@ namespace LumenFX.UI
 
             _state.SkyTonemapping = Toggle("Sky tonemapping", _state.SkyTonemapping, y); y += RowHeight;
 
+            y = Section("SKY & ABSOLUTE POWER", y);
+            _state.SkyRayleigh = Slider("Rayleigh scattering (0 = theme)", _state.SkyRayleigh, 0f, 5f, 0.01f, y); y += RowHeight;
+            _state.SkyMie = Slider("Mie scattering (0 = theme)", _state.SkyMie, 0f, 5f, 0.01f, y); y += RowHeight;
+            _state.SunPower = Slider("Sun power absolute (0 = game)", _state.SunPower, 0f, 20f, 0.1f, y); y += RowHeight;
+            _state.MoonPower = Slider("Moon power absolute (0 = game)", _state.MoonPower, 0f, 20f, 0.1f, y); y += RowHeight;
+
             if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Reset this tab"))
             {
                 _state.SunStrength = 1f;
@@ -148,6 +154,10 @@ namespace LumenFX.UI
                 _state.Ambience = 1f;
                 _state.Warmth = 0f;
                 _state.SkyTonemapping = true;
+                _state.SkyRayleigh = 0f;
+                _state.SkyMie = 0f;
+                _state.SunPower = 0f;
+                _state.MoonPower = 0f;
                 MarkDirty();
             }
         }
@@ -205,7 +215,7 @@ namespace LumenFX.UI
             {
                 _state.Brightness = 0f;
                 _state.Contrast = 0f;
-                _state.Gamma = 2.6f;
+                _state.Gamma = 2.2f;
                 _state.AdaptiveShadows = true;
                 _state.ForceLowBias = false;
                 _state.BiasScale = 1f;

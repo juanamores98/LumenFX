@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using UnityEngine;
 
 namespace LumenFX.Core
@@ -28,6 +28,14 @@ namespace LumenFX.Core
         private static float _filmicE;
         private static float _filmicF;
         private static float _filmicW;
+
+        // Ejes absolutos del cielo y de las fuentes. Se capturan porque los controles
+        // que los escriben usan 0 como "no tocar": sin un valor de partida guardado, ese 0
+        // solo dejaria de escribir y el campo se quedaria con lo ultimo que se puso.
+        private static float _rayleigh;
+        private static float _mie;
+        private static float _sunIntensity;
+        private static float _moonIntensity;
 
         private static int _shadowQuality;
 
@@ -61,6 +69,26 @@ namespace LumenFX.Core
             get { return _ground; }
         }
 
+        internal static float CapturedRayleigh
+        {
+            get { return _rayleigh; }
+        }
+
+        internal static float CapturedMie
+        {
+            get { return _mie; }
+        }
+
+        internal static float CapturedSunIntensity
+        {
+            get { return _sunIntensity; }
+        }
+
+        internal static float CapturedMoonIntensity
+        {
+            get { return _moonIntensity; }
+        }
+
         internal static void ResetCapture()
         {
             _captured = false;
@@ -85,6 +113,10 @@ namespace LumenFX.Core
 
             _direct = dayNight.m_LightColor;
             _exposure = dayNight.m_Exposure;
+            _rayleigh = dayNight.m_RayleighScattering;
+            _mie = dayNight.m_MieScattering;
+            _sunIntensity = dayNight.m_SunIntensity;
+            _moonIntensity = dayNight.m_MoonIntensity;
 
             var ambientType = typeof(DayNightProperties.AmbientColor);
             var ambient = dayNight.m_AmbientColor;
@@ -123,6 +155,10 @@ namespace LumenFX.Core
             if (dayNight != null)
             {
                 dayNight.m_Exposure = _exposure;
+                dayNight.m_RayleighScattering = _rayleigh;
+                dayNight.m_MieScattering = _mie;
+                dayNight.m_SunIntensity = _sunIntensity;
+                dayNight.m_MoonIntensity = _moonIntensity;
 
                 if (_direct != null)
                 {

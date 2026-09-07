@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using UnityEngine;
 
 namespace LumenFX.Core
@@ -54,6 +54,47 @@ namespace LumenFX.Core
             }
 
             _cachedDayNight.m_Tonemapping = state.SkyTonemapping;
+
+            // Los cuatro ejes absolutos. Cero significa "el valor del juego o del tema del
+            // mapa", y para que eso sea reversible hay que reponerlo desde lo capturado: dejar
+            // de escribir no basta, el campo conservaria el ultimo valor puesto hasta recargar.
+            VanillaSnapshot.Capture();
+
+            if (state.SkyRayleigh > 0f)
+            {
+                _cachedDayNight.m_RayleighScattering = Mathf.Clamp(state.SkyRayleigh, 0.01f, 5f);
+            }
+            else if (VanillaSnapshot.Captured)
+            {
+                _cachedDayNight.m_RayleighScattering = VanillaSnapshot.CapturedRayleigh;
+            }
+
+            if (state.SkyMie > 0f)
+            {
+                _cachedDayNight.m_MieScattering = Mathf.Clamp(state.SkyMie, 0.01f, 5f);
+            }
+            else if (VanillaSnapshot.Captured)
+            {
+                _cachedDayNight.m_MieScattering = VanillaSnapshot.CapturedMie;
+            }
+
+            if (state.SunPower > 0f)
+            {
+                _cachedDayNight.m_SunIntensity = Mathf.Clamp(state.SunPower, 0f, 20f);
+            }
+            else if (VanillaSnapshot.Captured)
+            {
+                _cachedDayNight.m_SunIntensity = VanillaSnapshot.CapturedSunIntensity;
+            }
+
+            if (state.MoonPower > 0f)
+            {
+                _cachedDayNight.m_MoonIntensity = Mathf.Clamp(state.MoonPower, 0f, 20f);
+            }
+            else if (VanillaSnapshot.Captured)
+            {
+                _cachedDayNight.m_MoonIntensity = VanillaSnapshot.CapturedMoonIntensity;
+            }
 
             if (!state.LightingDirty)
             {

@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using ICities;
 using UnityEngine;
 using Harmony;
@@ -35,9 +35,82 @@ namespace LumenFX
         /// True while this mod owns the camera tonemapping component, so
         /// SceneFX can defer its own tone writes to this one.
         /// </summary>
+        /// <remarks>
+        /// Se conserva por compatibilidad con versiones de SceneFX que solo saben preguntar
+        /// por el tono. Lo que de verdad describe quien escribe cada campo es
+        /// <see cref="ActiveClaims"/>.
+        /// </remarks>
         public static bool ToneWriterActive
         {
-            get { return _patched; }
+            get { return Claims("tone"); }
+        }
+
+        /// <summary>
+        /// Los campos compartidos del juego que este mod esta escribiendo ahora mismo,
+        /// separados por comas.
+        /// </summary>
+        /// <remarks>
+        /// <b>Por que hace falta.</b> Cuatro mods escriben sobre los mismos campos de
+        /// <c>DayNightProperties</c> y de <c>ToneMapping</c>. Un solo booleano de "yo mando en
+        /// el tono" no alcanzaba: en cuanto LumenFX gano controles absolutos de intensidad
+        /// solar y de cielo, pasaron a estar en disputa <c>m_SunIntensity</c>,
+        /// <c>m_MoonIntensity</c>, <c>m_RayleighScattering</c> y <c>m_MieScattering</c>.
+        ///
+        /// Las reclamaciones son dinamicas: un eje solo se reclama mientras se esta
+        /// escribiendo de verdad. Con el modo vanilla puesto no se reclama nada, que es lo
+        /// coherente con no tocar el juego.
+        ///
+        /// Se publica como texto y no como un enum para que el otro lado pueda leerlo por
+        /// reflexion sin compartir ningun tipo.
+        /// </remarks>
+        public static string ActiveClaims
+        {
+            get
+            {
+                if (!_patched)
+                {
+                    return string.Empty;
+                }
+
+                var state = TunerRuntime.CurrentState;
+                if (state == null || state.VanillaMode)
+                {
+                    return string.Empty;
+                }
+
+                // El mezclador y el perfil de tono escriben siempre que el mod esta vivo.
+                string claims = "tone,lightColor,skyTonemapping";
+
+                if (state.AdaptiveExposure)
+                {
+                    claims += ",exposure";
+                }
+
+                if (state.SunPower > 0f)
+                {
+                    claims += ",sunIntensity";
+                }
+
+                if (state.MoonPower > 0f)
+                {
+                    claims += ",moonIntensity";
+                }
+
+                if (state.SkyRayleigh > 0f || state.SkyMie > 0f)
+                {
+                    claims += ",sky";
+                }
+
+                return claims;
+            }
+        }
+
+        private static bool Claims(string field)
+        {
+            string claims = ActiveClaims;
+
+            return claims.Length > 0
+                && ("," + claims + ",").IndexOf("," + field + ",", System.StringComparison.Ordinal) >= 0;
         }
 
         /// <summary>
@@ -183,6 +256,10 @@ namespace LumenFX
                     else if (name == "softshadows" && bool.TryParse(val, out b)) state.SoftShadows = b;
                     else if (name == "adaptiveexposure" && bool.TryParse(val, out b)) state.AdaptiveExposure = b;
                     else if (name == "adaptiveexposuregain" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.AdaptiveExposureGain = f;
+                    else if (name == "skyrayleigh" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyRayleigh = f;
+                    else if (name == "skymie" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyMie = f;
+                    else if (name == "sunpower" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SunPower = f;
+                    else if (name == "moonpower" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.MoonPower = f;
                 }
 
                 state.LightingDirty = true;
@@ -225,6 +302,10 @@ namespace LumenFX
                 "    <softShadows>{19}</softShadows>\n" +
                 "    <adaptiveExposure>{20}</adaptiveExposure>\n" +
                 "    <adaptiveExposureGain>{21}</adaptiveExposureGain>\n" +
+                "    <skyRayleigh>{22}</skyRayleigh>\n" +
+                "    <skyMie>{23}</skyMie>\n" +
+                "    <sunPower>{24}</sunPower>\n" +
+                "    <moonPower>{25}</moonPower>\n" +
                 "  </lumenfx>",
                 s.SunStrength.ToString("0.##", ci),
                 s.MoonStrength.ToString("0.##", ci),
@@ -247,7 +328,11 @@ namespace LumenFX
                 s.BiasScale.ToString("0.##", ci),
                 s.SoftShadows.ToString().ToLowerInvariant(),
                 s.AdaptiveExposure.ToString().ToLowerInvariant(),
-                s.AdaptiveExposureGain.ToString("0.##", ci));
+                s.AdaptiveExposureGain.ToString("0.##", ci),
+                s.SkyRayleigh.ToString("0.###", ci),
+                s.SkyMie.ToString("0.###", ci),
+                s.SunPower.ToString("0.##", ci),
+                s.MoonPower.ToString("0.##", ci));
         }
     }
 }
