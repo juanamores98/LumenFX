@@ -260,6 +260,9 @@ namespace LumenFX
                     else if (name == "skymie" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyMie = f;
                     else if (name == "sunpower" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SunPower = f;
                     else if (name == "moonpower" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.MoonPower = f;
+                    // El modo vanilla decide si el mod escribe o no, y no se podia expresar en
+                    // un perfil de suite: un perfil no tenia forma de encenderlo ni apagarlo.
+                    else if (name == "vanillamode" && bool.TryParse(val, out b)) state.VanillaMode = b;
                 }
 
                 state.LightingDirty = true;
@@ -306,6 +309,7 @@ namespace LumenFX
                 "    <skyMie>{23}</skyMie>\n" +
                 "    <sunPower>{24}</sunPower>\n" +
                 "    <moonPower>{25}</moonPower>\n" +
+                "    <vanillaMode>{26}</vanillaMode>\n" +
                 "  </lumenfx>",
                 s.SunStrength.ToString("0.##", ci),
                 s.MoonStrength.ToString("0.##", ci),
@@ -332,7 +336,8 @@ namespace LumenFX
                 s.SkyRayleigh.ToString("0.###", ci),
                 s.SkyMie.ToString("0.###", ci),
                 s.SunPower.ToString("0.##", ci),
-                s.MoonPower.ToString("0.##", ci));
+                s.MoonPower.ToString("0.##", ci),
+                s.VanillaMode.ToString().ToLowerInvariant());
         }
     }
 }
