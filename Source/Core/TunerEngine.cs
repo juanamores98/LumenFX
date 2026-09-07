@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using LumenFX.IO;
 using LumenFX.Presets;
@@ -122,15 +122,26 @@ namespace LumenFX.Core
             StateStore.Save(false);
         }
 
+        /// <summary>Abre o cierra la ventana. Lo mismo que Ctrl+Alt+L.</summary>
+        /// <remarks>
+        /// Publica y estatica a proposito: es el punto por el que otro mod de la suite puede
+        /// llevarte a este panel sin que tengas que acordarte del atajo. Guardar al cerrar
+        /// tiene que pasar tambien por aqui, o cerrar desde fuera perderia lo ultimo tocado.
+        /// </remarks>
+        public static void ToggleWindow()
+        {
+            _open = !_open;
+            if (!_open)
+            {
+                StateStore.SaveImmediate();
+            }
+        }
+
         private void Update()
         {
             if (Input.GetKey(KeyCode.LeftControl) && Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.L))
             {
-                _open = !_open;
-                if (!_open)
-                {
-                    StateStore.SaveImmediate();
-                }
+                ToggleWindow();
             }
 
             StateStore.CheckPendingSave();

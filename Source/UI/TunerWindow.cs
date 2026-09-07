@@ -9,30 +9,31 @@ using LumenFX.Runtime;
 namespace LumenFX.UI
 {
     /// <summary>
-    /// v2 tuner window: three tabs (Sun &amp; Sky, Tone &amp; Shadows, Presets)
-    /// with its own layout, opened with Ctrl + Alt + L.
+    /// v2 tuner window: 4 structured ergonomic tabs
+    /// (☀️ Sol &amp; Cielo, 🎨 Balance de Color, 📐 Sombras &amp; Tono, 📁 Presets)
+    /// with scroll areas and human-readable parameters. Opened with Ctrl + Alt + L.
     /// </summary>
     internal sealed class TunerWindow
     {
-        private const float RowHeight = 30f;
-        private const float LabelWidth = 120f;
-        private const float SliderX = 135f;
-        private const float SliderWidth = 290f;
-        private const float ValueX = 435f;
-        private const float ValueWidth = 90f;
+        private const float RowHeight = 28f;
+        private const float LabelWidth = 140f;
+        private const float SliderX = 150f;
+        private const float SliderWidth = 280f;
+        private const float ValueX = 438f;
+        private const float ValueWidth = 80f;
 
-        private static readonly string[] Tabs = { "Sun && Sky", "Advanced", "Tone && Shadows", "Presets" };
+        private static readonly string[] Tabs = { "Sol & Cielo", "Balance de Color", "Sombras & Tono", "Presets" };
 
         private readonly LightState _state;
         private readonly Action _onChanged;
 
-        private Rect _rect = new Rect(620f, 300f, 540f, 440f);
+        private Rect _rect = new Rect(620f, 260f, 550f, 510f);
         private int _tab;
+        private Vector2 _scrollTab0;
+        private Vector2 _scrollTab1;
+        private Vector2 _scrollTab2;
         private Vector2 _presetScroll;
         private string _presetName = "My look";
-        // Nula a proposito: la pestana la carga la primera vez que se abre. Arrancarla como
-        // lista vacia dejaba sin disparar la carga perezosa de mas abajo, y el listado se veia
-        // en blanco hasta pulsar Refresh a mano.
         private List<PresetDocument> _presets;
 
         internal TunerWindow(LightState state, Action onChanged)
@@ -40,20 +41,20 @@ namespace LumenFX.UI
             _state = state;
             _onChanged = onChanged;
             float x = state.WindowX > 0f ? state.WindowX : 620f;
-            float y = state.WindowY > 0f ? state.WindowY : 300f;
+            float y = state.WindowY > 0f ? state.WindowY : 260f;
             if (Screen.width > 0 && Screen.height > 0)
             {
-                x = Mathf.Clamp(x, 10f, Mathf.Max(10f, Screen.width - 550f));
-                y = Mathf.Clamp(y, 10f, Mathf.Max(10f, Screen.height - 480f));
+                x = Mathf.Clamp(x, 10f, Mathf.Max(10f, Screen.width - 560f));
+                y = Mathf.Clamp(y, 10f, Mathf.Max(10f, Screen.height - 520f));
             }
-            _rect = new Rect(x, y, 540f, 470f);
+            _rect = new Rect(x, y, 550f, 510f);
         }
 
         internal void Draw(int id)
         {
             float oldX = _rect.x;
             float oldY = _rect.y;
-            _rect = GUI.Window(id, _rect, DrawWindow, "LumenFX v2");
+            _rect = GUI.Window(id, _rect, DrawWindow, "LumenFX Studio v2");
             if (!Mathf.Approximately(oldX, _rect.x) || !Mathf.Approximately(oldY, _rect.y))
             {
                 _state.WindowX = _rect.x;
@@ -70,25 +71,26 @@ namespace LumenFX.UI
                 TunerEngine.CloseWindow();
             }
 
-            _tab = GUI.Toolbar(new Rect(8f, 26f, _rect.width - 16f, 24f), _tab, Tabs);
+            _tab = GUI.Toolbar(new Rect(8f, 26f, _rect.width - 16f, 26f), _tab, Tabs);
 
             BeginChangeCheck();
 
+            Rect contentArea = new Rect(8f, 56f, _rect.width - 16f, _rect.height - 66f);
             if (_tab == 0)
             {
-                DrawSunSkyTab();
+                DrawSunSkyTab(contentArea);
             }
             else if (_tab == 1)
             {
-                DrawAdvancedTab();
+                DrawColorBalanceTab(contentArea);
             }
             else if (_tab == 2)
             {
-                DrawToneTab();
+                DrawShadowsToneTab(contentArea);
             }
             else
             {
-                DrawPresetsTab();
+                DrawPresetsTab(contentArea);
             }
 
             if (EndChangeCheck())
@@ -116,41 +118,39 @@ namespace LumenFX.UI
 
         private static float Section(string title, float y)
         {
-            GUI.Label(new Rect(10f, y, 350f, 22f), "<b><color=#4FC3F7>" + title + "</color></b>");
+            GUI.Label(new Rect(8f, y, 400f, 22f), "<b><color=#4FC3F7>" + title + "</color></b>");
             return y + 24f;
         }
 
-        private void DrawSunSkyTab()
+        private void DrawSunSkyTab(Rect area)
         {
-            float y = 58f;
+            _scrollTab0 = GUI.BeginScrollView(area, _scrollTab0, new Rect(0f, 0f, area.width - 20f, 430f));
+            float y = 4f;
 
-            y = Section("GLOBAL & MODE", y);
-            _state.VanillaMode = Toggle("Vanilla mode (suspend LumenFX)", _state.VanillaMode, y); y += RowHeight;
-
-            if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Restore vanilla now"))
+            y = Section("GLOBAL MODE & RESTORE", y);
+            _state.VanillaMode = Toggle("Modo Vanilla (suspender LumenFX)", _state.VanillaMode, y);
+            if (GUI.Button(new Rect(320f, y, 180f, 22f), "Restaurar Vanilla"))
             {
                 _state.ResetToNeutral();
                 TunerRuntime.RestoreVanilla();
                 MarkDirty();
-                return;
             }
-            y += RowHeight + 6f;
+            y += RowHeight + 4f;
 
-            y = Section("SUN & SKY GAIN", y);
-            _state.SunStrength = Slider("Sun strength", _state.SunStrength, 0f, 2f, 0.05f, y); y += RowHeight;
-            _state.MoonStrength = Slider("Moon strength", _state.MoonStrength, 0f, 2f, 0.05f, y); y += RowHeight;
-            _state.Ambience = Slider("Ambience", _state.Ambience, 0f, 2f, 0.05f, y); y += RowHeight;
-            _state.Warmth = Slider("Warmth", _state.Warmth, -1f, 1f, 0.05f, y); y += RowHeight;
+            y = Section("INTENSIDADES MAESTRAS (SOL, LUNA Y AMBIENTE)", y);
+            _state.SunStrength = Slider("Fuerza del Sol", _state.SunStrength, 0f, 3f, 0.05f, y); y += RowHeight;
+            _state.MoonStrength = Slider("Fuerza de la Luna", _state.MoonStrength, 0f, 2f, 0.05f, y); y += RowHeight;
+            _state.Ambience = Slider("Luz Ambiental", _state.Ambience, 0f, 2f, 0.05f, y); y += RowHeight;
+            _state.Warmth = Slider("Calidez General", _state.Warmth, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SkyTonemapping = Toggle("Tonemapping en domo celeste", _state.SkyTonemapping, y); y += RowHeight + 4f;
 
-            _state.SkyTonemapping = Toggle("Sky tonemapping", _state.SkyTonemapping, y); y += RowHeight;
+            y = Section("PHYSICAL POWER & ATMOSPHERIC SCATTERING", y);
+            _state.SunPower = Slider("Potencia Abs. Sol (0 = auto)", _state.SunPower, 0f, 20f, 0.1f, y); y += RowHeight;
+            _state.MoonPower = Slider("Potencia Abs. Luna (0 = auto)", _state.MoonPower, 0f, 20f, 0.1f, y); y += RowHeight;
+            _state.SkyRayleigh = Slider("Rayleigh scattering", _state.SkyRayleigh, 0f, 5f, 0.01f, y); y += RowHeight;
+            _state.SkyMie = Slider("Mie scattering", _state.SkyMie, 0f, 5f, 0.01f, y); y += RowHeight + 6f;
 
-            y = Section("SKY & ABSOLUTE POWER", y);
-            _state.SkyRayleigh = Slider("Rayleigh scattering (0 = theme)", _state.SkyRayleigh, 0f, 5f, 0.01f, y); y += RowHeight;
-            _state.SkyMie = Slider("Mie scattering (0 = theme)", _state.SkyMie, 0f, 5f, 0.01f, y); y += RowHeight;
-            _state.SunPower = Slider("Sun power absolute (0 = game)", _state.SunPower, 0f, 20f, 0.1f, y); y += RowHeight;
-            _state.MoonPower = Slider("Moon power absolute (0 = game)", _state.MoonPower, 0f, 20f, 0.1f, y); y += RowHeight;
-
-            if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Reset this tab"))
+            if (GUI.Button(new Rect(SliderX, y, SliderWidth, 24f), "Reset this tab to neutral"))
             {
                 _state.SunStrength = 1f;
                 _state.MoonStrength = 1f;
@@ -163,23 +163,28 @@ namespace LumenFX.UI
                 _state.MoonPower = 0f;
                 MarkDirty();
             }
+
+            GUI.EndScrollView();
         }
 
-        private void DrawAdvancedTab()
+        private void DrawColorBalanceTab(Rect area)
         {
-            float y = 58f;
+            _scrollTab1 = GUI.BeginScrollView(area, _scrollTab1, new Rect(0f, 0f, area.width - 20f, 360f));
+            float y = 4f;
 
-            y = Section("SOURCE TEMPERATURE & TINT", y);
-            _state.SunTemp = Slider("Sun temp", _state.SunTemp, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.SunTint = Slider("Sun tint", _state.SunTint, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.MoonTemp = Slider("Moon temp", _state.MoonTemp, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.MoonTint = Slider("Moon tint", _state.MoonTint, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.SkyTemp = Slider("Sky temp", _state.SkyTemp, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.SkyTint = Slider("Sky tint", _state.SkyTint, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.GlobalTint = Slider("Global tint", _state.GlobalTint, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.TwilightTint = Slider("Twilight tint", _state.TwilightTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            y = Section("LUZ DIURNA (SOL & CIELO)", y);
+            _state.SunTemp = Slider("Sun temperature (cool/warm)", _state.SunTemp, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SunTint = Slider("Tinte Solar (Verde/Magenta)", _state.SunTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SkyTemp = Slider("Temp. Cielo", _state.SkyTemp, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.SkyTint = Slider("Tinte Cielo", _state.SkyTint, -1f, 1f, 0.05f, y); y += RowHeight + 4f;
 
-            if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Reset this tab"))
+            y = Section("NIGHT LIGHT & TWILIGHT", y);
+            _state.MoonTemp = Slider("Temp. Lunar", _state.MoonTemp, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.MoonTint = Slider("Tinte Lunar", _state.MoonTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.TwilightTint = Slider("Tinte Crepuscular", _state.TwilightTint, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.GlobalTint = Slider("Tinte Global", _state.GlobalTint, -1f, 1f, 0.05f, y); y += RowHeight + 6f;
+
+            if (GUI.Button(new Rect(SliderX, y, SliderWidth, 24f), "Restablecer tintes a neutro (0)"))
             {
                 _state.SunTemp = 0f;
                 _state.SunTint = 0f;
@@ -191,30 +196,35 @@ namespace LumenFX.UI
                 _state.TwilightTint = 0f;
                 MarkDirty();
             }
+
+            GUI.EndScrollView();
         }
 
-        private void DrawToneTab()
+        private void DrawShadowsToneTab(Rect area)
         {
-            float y = 58f;
+            _scrollTab2 = GUI.BeginScrollView(area, _scrollTab2, new Rect(0f, 0f, area.width - 20f, 430f));
+            float y = 4f;
 
-            y = Section("TONE MAPPING", y);
-            _state.Brightness = Slider("Brightness", _state.Brightness, -1f, 4f, 0.05f, y); y += RowHeight;
-            _state.Contrast = Slider("Contrast", _state.Contrast, -1f, 1f, 0.05f, y); y += RowHeight;
-            _state.Gamma = Slider("Gamma", _state.Gamma, 1.5f, 3.5f, 0.05f, y); y += RowHeight;
+            y = Section("MAPEO DE TONOS (FILMIC TONEMAPPING)", y);
+            _state.Brightness = Slider("Brillo", _state.Brightness, -1f, 4f, 0.05f, y); y += RowHeight;
+            _state.Contrast = Slider("Contraste", _state.Contrast, -1f, 1f, 0.05f, y); y += RowHeight;
+            _state.Gamma = Slider("Gamma", _state.Gamma, 1.5f, 3.5f, 0.05f, y); y += RowHeight + 4f;
 
-            y = Section("SHADOWS & EXPOSURE", y);
-            _state.AdaptiveShadows = Toggle("Adaptive shadow bias", _state.AdaptiveShadows, y); y += RowHeight;
-            _state.ForceLowBias = Toggle("Force low bias", _state.ForceLowBias, y); y += RowHeight;
-            _state.BiasScale = Slider("Bias scale", _state.BiasScale, 0f, 2f, 0.05f, y); y += RowHeight;
-            _state.SoftShadows = Toggle("Soft shadows", _state.SoftShadows, y); y += RowHeight;
+            y = Section("SHADOW QUALITY & BIAS", y);
+            _state.SoftShadows = Toggle("Sombras suaves (Soft shadows)", _state.SoftShadows, y); y += RowHeight;
+            _state.AdaptiveShadows = Toggle("Sesgo de sombra adaptativo (Anti-acne)", _state.AdaptiveShadows, y); y += RowHeight;
+            _state.ForceLowBias = Toggle("Forzar sesgo bajo", _state.ForceLowBias, y); y += RowHeight;
+            _state.BiasScale = Slider("Escala de sesgo", _state.BiasScale, 0f, 2f, 0.05f, y); y += RowHeight + 4f;
 
-            _state.AdaptiveExposure = Toggle("Adaptive day/night exposure", _state.AdaptiveExposure, y); y += RowHeight;
+            y = Section("ADAPTIVE DAY/NIGHT EXPOSURE", y);
+            _state.AdaptiveExposure = Toggle("Adaptive exposure", _state.AdaptiveExposure, y); y += RowHeight;
             if (_state.AdaptiveExposure)
             {
-                _state.AdaptiveExposureGain = Slider("Exposure lift gain", _state.AdaptiveExposureGain, 0f, 1f, 0.05f, y); y += RowHeight;
+                _state.AdaptiveExposureGain = Slider("Ganancia nocturna", _state.AdaptiveExposureGain, 0f, 1f, 0.05f, y); y += RowHeight;
             }
+            y += 6f;
 
-            if (GUI.Button(new Rect(SliderX, y + 4f, SliderWidth, 24f), "Reset this tab"))
+            if (GUI.Button(new Rect(SliderX, y, SliderWidth, 24f), "Restablecer tono y sombras"))
             {
                 _state.Brightness = 0f;
                 _state.Contrast = 0f;
@@ -227,49 +237,52 @@ namespace LumenFX.UI
                 _state.AdaptiveExposureGain = 0.5f;
                 MarkDirty();
             }
+
+            GUI.EndScrollView();
         }
 
-        private void DrawPresetsTab()
+        private void DrawPresetsTab(Rect area)
         {
-            if (GUI.Button(new Rect(260f, 56f, 130f, 24f), "Vanilla"))
+            float y = area.y;
+
+            if (GUI.Button(new Rect(area.x, y, 120f, 26f), "Vanilla"))
             {
-                // No hace falta releer el estado: es el mismo objeto, y
-                // ApplySuiteSection lo modifica en sitio.
-                Presets.QuickPresets.ApplyVanilla();
+                QuickPresets.ApplyVanilla();
             }
 
-            if (GUI.Button(new Rect(396f, 56f, 130f, 24f), "Optimized"))
+            if (GUI.Button(new Rect(area.x + 130f, y, 140f, 26f), "Optimized"))
             {
-                Presets.QuickPresets.ApplyOptimized();
+                QuickPresets.ApplyOptimized();
             }
 
-            if (GUI.Button(new Rect(8f, 56f, 120f, 24f), "Refresh"))
+            if (GUI.Button(new Rect(area.x + 280f, y, 110f, 26f), "Refrescar"))
             {
                 _presets = PresetLibrary.LoadAll();
             }
 
-            if (GUI.Button(new Rect(134f, 56f, 120f, 24f), "Open folder"))
+            if (GUI.Button(new Rect(area.x + 400f, y, 120f, 26f), "Carpeta"))
             {
                 PresetLibrary.EnsureFolder();
                 Application.OpenURL("file://" + PresetLibrary.Folder);
             }
 
+            y += 34f;
             _presets = _presets ?? PresetLibrary.LoadAll();
 
-            float listHeight = 180f;
-            _presetScroll = GUI.BeginScrollView(new Rect(8f, 86f, _rect.width - 16f, listHeight), _presetScroll,
-                new Rect(0f, 0f, _rect.width - 40f, Mathf.Max(1, _presets.Count) * 28f));
+            float listHeight = 220f;
+            _presetScroll = GUI.BeginScrollView(new Rect(area.x, y, area.width, listHeight), _presetScroll,
+                new Rect(0f, 0f, area.width - 24f, Mathf.Max(1, _presets.Count) * 28f));
 
             float rowY = 0f;
             foreach (var preset in _presets)
             {
-                GUI.Label(new Rect(4f, rowY + 3f, 250f, 24f), preset.Name);
-                if (GUI.Button(new Rect(260f, rowY, 60f, 24f), "Load"))
+                GUI.Label(new Rect(4f, rowY + 3f, 280f, 24f), preset.Name);
+                if (GUI.Button(new Rect(290f, rowY, 70f, 24f), "Cargar"))
                 {
                     ApplyPreset(preset);
                 }
 
-                if (GUI.Button(new Rect(326f, rowY, 60f, 24f), "Delete"))
+                if (GUI.Button(new Rect(368f, rowY, 70f, 24f), "Borrar"))
                 {
                     PresetLibrary.Delete(preset);
                     _presets = PresetLibrary.LoadAll();
@@ -280,11 +293,10 @@ namespace LumenFX.UI
 
             GUI.EndScrollView();
 
-            float y = 86f + listHeight + 10f;
-            _presetName = GUI.TextField(new Rect(8f, y, _rect.width - 16f, 24f), _presetName);
-            y += 30f;
-
-            if (GUI.Button(new Rect(8f, y, _rect.width - 16f, 26f), "Save current look as preset"))
+            y += listHeight + 10f;
+            GUI.Label(new Rect(area.x, y, 120f, 22f), "Nombre del preset:");
+            _presetName = GUI.TextField(new Rect(area.x + 130f, y, 260f, 24f), _presetName);
+            if (GUI.Button(new Rect(area.x + 400f, y, 120f, 24f), "Guardar"))
             {
                 PresetLibrary.Save(DocumentFromState(_presetName));
                 _presets = PresetLibrary.LoadAll();
@@ -349,22 +361,6 @@ namespace LumenFX.UI
             };
         }
 
-        /// <summary>
-        /// Un deslizador que solo escribe cuando el usuario lo mueve.
-        /// </summary>
-        /// <remarks>
-        /// <b>Que hacia mal.</b> Redondeaba el valor al paso mas cercano y lo comparaba con el
-        /// actual; si no coincidian, lo escribia. Como un valor cargado de un preset casi nunca
-        /// cae justo en un multiplo del paso, el deslizador reescribia la configuracion sola
-        /// nada mas abrir la ventana. Medido: la receta del usuario entraba con densidad
-        /// 0.00006, ruido 0.51 y distancia 2852, y la ventana los dejaba en 0.00005, 0.52 y
-        /// 2850 sin que nadie tocara nada. Ademas eso disparaba un guardado y una aplicacion
-        /// cada vez, lo que se notaba como tirones.
-        ///
-        /// <b>Como se arregla.</b> IMGUI ya avisa de si un control cambio por accion del
-        /// usuario: <c>GUI.changed</c>. Se aisla alrededor del control y solo entonces se
-        /// redondea y se escribe. Sin interaccion, el deslizador solo dibuja.
-        /// </remarks>
         private float Slider(string label, float value, float min, float max, float step, float y)
         {
             GUI.Label(new Rect(10f, y, LabelWidth, 24f), label);
@@ -393,7 +389,7 @@ namespace LumenFX.UI
 
         private bool Toggle(string label, bool value, float y)
         {
-            bool result = GUI.Toggle(new Rect(10f, y, 320f, 24f), value, label);
+            bool result = GUI.Toggle(new Rect(10f, y, 380f, 24f), value, " " + label);
             if (result != value)
             {
                 MarkDirty();
