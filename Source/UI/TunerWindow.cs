@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using LumenFX.Core;
@@ -26,6 +26,17 @@ namespace LumenFX.UI
         private readonly LightState _state;
         private readonly Action _onChanged;
 
+        /// <summary>
+        /// Alto que ocupo el contenido de la pestana la ultima vez que se dibujo.
+        /// </summary>
+        /// <remarks>
+        /// La ventana tenia un alto fijo. Segun la pestana, lo ultimo —que suele ser un boton—
+        /// se quedaba fuera del recorte y no habia forma de pulsarlo. Medirlo al dibujar y
+        /// ajustar en el siguiente fotograma cuesta un fotograma de retraso y ningun numero
+        /// que mantener a mano.
+        /// </remarks>
+        private float _contentHeight;
+
         private Rect _rect = new Rect(620f, 300f, 540f, 440f);
         private int _tab;
         private Vector2 _presetScroll;
@@ -50,6 +61,12 @@ namespace LumenFX.UI
         {
             float oldX = _rect.x;
             float oldY = _rect.y;
+            // Que quepa la pestana que se este viendo, sin salirse de la pantalla.
+            if (_contentHeight > 0f)
+            {
+                _rect.height = Mathf.Min(_contentHeight, Screen.height - 60f);
+            }
+
             _rect = GUI.Window(id, _rect, DrawWindow, "LumenFX v2");
             if (!Mathf.Approximately(oldX, _rect.x) || !Mathf.Approximately(oldY, _rect.y))
             {
@@ -160,6 +177,7 @@ namespace LumenFX.UI
                 _state.MoonPower = 0f;
                 MarkDirty();
             }
+            _contentHeight = y + 34f;
         }
 
         private void DrawAdvancedTab()
@@ -188,6 +206,7 @@ namespace LumenFX.UI
                 _state.TwilightTint = 0f;
                 MarkDirty();
             }
+            _contentHeight = y + 34f;
         }
 
         private void DrawToneTab()
@@ -224,10 +243,23 @@ namespace LumenFX.UI
                 _state.AdaptiveExposureGain = 0.5f;
                 MarkDirty();
             }
+            _contentHeight = y + 34f;
         }
 
         private void DrawPresetsTab()
         {
+            if (GUI.Button(new Rect(260f, 56f, 130f, 24f), "Vanilla"))
+            {
+                // No hace falta releer el estado: es el mismo objeto, y
+                // ApplySuiteSection lo modifica en sitio.
+                Presets.QuickPresets.ApplyVanilla();
+            }
+
+            if (GUI.Button(new Rect(396f, 56f, 130f, 24f), "Optimized"))
+            {
+                Presets.QuickPresets.ApplyOptimized();
+            }
+
             if (GUI.Button(new Rect(8f, 56f, 120f, 24f), "Refresh"))
             {
                 _presets = PresetLibrary.LoadAll();
@@ -274,6 +306,7 @@ namespace LumenFX.UI
                 PresetLibrary.Save(DocumentFromState(_presetName));
                 _presets = PresetLibrary.LoadAll();
             }
+            _contentHeight = y + 34f;
         }
 
         private void ApplyPreset(PresetDocument preset)

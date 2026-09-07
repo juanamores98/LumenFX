@@ -78,28 +78,27 @@ namespace LumenFX.Core
             // de escribir no basta, el campo conservaria el ultimo valor puesto hasta recargar.
             VanillaSnapshot.Capture();
 
-            // La dispersión del cielo es del tema del mapa. Si hay un gestor de temas
-            // administrándola, estos dos controles se quedan quietos: escribirlos dejaría
-            // valores ajenos dentro del tema que el usuario guarde después.
-            if (!ThemeOwnership.AtmosphereIsManaged)
+            // La dispersión del cielo también la administra el gestor de temas, pero eso no
+            // impide escribirla: un valor que el usuario pide expresamente —su receta— se
+            // aplica, igual que hacía Render It!+ conviviendo con Theme Mixer. Lo que no se
+            // hace nunca es devolver la línea base capturada, porque se capturó antes de que
+            // el tema aplicara la suya y devolverla lo borraría.
+            if (state.SkyRayleigh > 0f)
             {
-                if (state.SkyRayleigh > 0f)
-                {
-                    _cachedDayNight.m_RayleighScattering = Mathf.Clamp(state.SkyRayleigh, 0.01f, 5f);
-                }
-                else if (VanillaSnapshot.Captured)
-                {
-                    _cachedDayNight.m_RayleighScattering = VanillaSnapshot.CapturedRayleigh;
-                }
+                _cachedDayNight.m_RayleighScattering = Mathf.Clamp(state.SkyRayleigh, 0.01f, 5f);
+            }
+            else if (VanillaSnapshot.Captured && !ThemeOwnership.AtmosphereIsManaged)
+            {
+                _cachedDayNight.m_RayleighScattering = VanillaSnapshot.CapturedRayleigh;
+            }
 
-                if (state.SkyMie > 0f)
-                {
-                    _cachedDayNight.m_MieScattering = Mathf.Clamp(state.SkyMie, 0.01f, 5f);
-                }
-                else if (VanillaSnapshot.Captured)
-                {
-                    _cachedDayNight.m_MieScattering = VanillaSnapshot.CapturedMie;
-                }
+            if (state.SkyMie > 0f)
+            {
+                _cachedDayNight.m_MieScattering = Mathf.Clamp(state.SkyMie, 0.01f, 5f);
+            }
+            else if (VanillaSnapshot.Captured && !ThemeOwnership.AtmosphereIsManaged)
+            {
+                _cachedDayNight.m_MieScattering = VanillaSnapshot.CapturedMie;
             }
 
             if (state.SunPower > 0f)
