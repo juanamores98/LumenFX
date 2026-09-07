@@ -12,7 +12,25 @@ namespace LumenFX.Core
     /// </summary>
     internal static class LightingMixer
     {
-        private static readonly float[] KeyTimes = { 0f, 0.2f, 0.26f, 0.32f, 0.5f, 0.68f, 0.74f, 0.8f, 1f };
+        /// <summary>
+        /// Los instantes en que se remuestrea la curva del dia.
+        /// </summary>
+        /// <remarks>
+        /// <b>Son los del propio juego.</b> La gradiente que trae <c>DayNightProperties</c>
+        /// tiene siete claves en 0.23, 0.26, 0.32, 0.5, 0.68, 0.74 y 0.77, y fuera de ese
+        /// tramo mantiene el color del extremo. Copiar esa colocacion conserva la forma
+        /// original de la curva en vez de imponerle una reticula uniforme.
+        ///
+        /// <b>Y no pueden ser mas de ocho.</b> Una <c>Gradient</c> de Unity admite ocho claves
+        /// de color como maximo. Una version anterior de este arreglo puso nueve, y el
+        /// resultado no fue que sobrara una: la gradiente entera degeneraba en dos claves
+        /// blancas, o sea el sol plano y sin color a cualquier hora. Se midio en partida.
+        /// Si alguna vez hay que anadir instantes, hay que quitar otros.
+        /// </remarks>
+        private const int MaxGradientKeys = 8;
+
+        private static readonly float[] KeyTimes =
+            { 0.23f, 0.26f, 0.32f, 0.5f, 0.68f, 0.74f, 0.77f };
 
         private const float DawnStart = 0.20f;
         private const float DawnEnd = 0.32f;
@@ -140,8 +158,11 @@ namespace LumenFX.Core
                 return null;
             }
 
-            var keys = new GradientColorKey[KeyTimes.Length];
-            for (int i = 0; i < KeyTimes.Length; i++)
+            // Guarda explicita: si alguien vuelve a alargar KeyTimes, es mejor perder los
+            // instantes sobrantes que perder la gradiente entera.
+            int count = Mathf.Min(KeyTimes.Length, MaxGradientKeys);
+            var keys = new GradientColorKey[count];
+            for (int i = 0; i < count; i++)
             {
                 float time = KeyTimes[i];
                 Color sampled = source.Evaluate(time);
