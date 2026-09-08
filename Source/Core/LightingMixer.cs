@@ -41,12 +41,13 @@ namespace LumenFX.Core
         private static FieldInfo _equatorColorField;
         private static FieldInfo _groundColorField;
         private static DayNightProperties _cachedDayNight;
-        private static bool _exposureWritten;
+        private static bool _classicColor;
+        private static Gradient _sourceDirect;
 
         public static void ClearCache()
         {
             _cachedDayNight = null;
-            _exposureWritten = false;
+            _classicColor = false; _sourceDirect = null;
             Runtime.TunerRuntime.CurrentState.LightingDirty = true;
         }
 
@@ -75,65 +76,20 @@ namespace LumenFX.Core
             }
 
             VanillaSnapshot.Capture();
-            _cachedDayNight.m_Tonemapping = state.SkyTonemapping;
-            if (state.SkyExposure > 0f)
-            {
-                _cachedDayNight.m_Exposure = state.SkyExposure;
-                _exposureWritten = true;
-            }
-            else if (_exposureWritten)
-            {
-                if (VanillaSnapshot.Captured && !state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged)
-                    _cachedDayNight.m_Exposure = VanillaSnapshot.CapturedExposure;
-                _exposureWritten = false;
-            }
+            Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_Tonemapping", state.SkyTonemapping);
+            bool classicPower = Infrastructure.FxInterop.ClassicRequest("sunStrength");
+            if (classicPower || !state.AdaptiveExposure) Absolute("m_Exposure", classicPower ? 1f : state.SkyExposure);
+            Absolute("m_RayleighScattering", state.SkyRayleigh);
+            Absolute("m_MieScattering", state.SkyMie);
+            if (!classicPower && state.LegacySceneLighting)
+                Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_SunIntensity", Infrastructure.PropertyLedger.Baseline<float>(_cachedDayNight, "m_SunIntensity") * state.LegacySceneSunMultiplier);
+            else Absolute("m_SunIntensity", classicPower ? 3.318695f : state.SunPower);
+            Absolute("m_MoonIntensity", state.MoonPower);
 
-            // Los cuatro ejes absolutos. Cero significa "el valor del juego o del tema del
-            // mapa", y para que eso sea reversible hay que reponerlo desde lo capturado: dejar
-            // de escribir no basta, el campo conservaria el ultimo valor puesto hasta recargar.
-            VanillaSnapshot.Capture();
-
-            // La dispersión del cielo también la administra el gestor de temas, pero eso no
-            // impide escribirla: un valor que el usuario pide expresamente —su receta— se
-            // aplica, igual que hacía Render It!+ conviviendo con Theme Mixer. Lo que no se
-            // hace nunca es devolver la línea base capturada, porque se capturó antes de que
-            // el tema aplicara la suya y devolverla lo borraría.
-            if (state.SkyRayleigh > 0f)
-            {
-                _cachedDayNight.m_RayleighScattering = Mathf.Clamp(state.SkyRayleigh, 0.01f, 5f);
-            }
-            else if (VanillaSnapshot.Captured && !ThemeOwnership.AtmosphereIsManaged)
-            {
-                _cachedDayNight.m_RayleighScattering = VanillaSnapshot.CapturedRayleigh;
-            }
-
-            if (state.SkyMie > 0f)
-            {
-                _cachedDayNight.m_MieScattering = Mathf.Clamp(state.SkyMie, 0.01f, 5f);
-            }
-            else if (VanillaSnapshot.Captured && !ThemeOwnership.AtmosphereIsManaged)
-            {
-                _cachedDayNight.m_MieScattering = VanillaSnapshot.CapturedMie;
-            }
-
-            if (state.SunPower > 0f)
-            {
-                _cachedDayNight.m_SunIntensity = Mathf.Clamp(state.SunPower, 0f, 20f);
-            }
-            else if (VanillaSnapshot.Captured)
-            {
-                _cachedDayNight.m_SunIntensity = VanillaSnapshot.CapturedSunIntensity;
-            }
-
-            if (state.MoonPower > 0f)
-            {
-                _cachedDayNight.m_MoonIntensity = Mathf.Clamp(state.MoonPower, 0f, 20f);
-            }
-            else if (VanillaSnapshot.Captured)
-            {
-                _cachedDayNight.m_MoonIntensity = VanillaSnapshot.CapturedMoonIntensity;
-            }
-
+            bool classicColor = Infrastructure.FxInterop.ClassicRequest("sunColor");
+            if (classicColor != _classicColor) { state.LightingDirty = true; _classicColor = classicColor; }
+            var liveSource = Infrastructure.PropertyLedger.Baseline<Gradient>(_cachedDayNight, "m_LightColor");
+            if (!object.ReferenceEquals(liveSource, _sourceDirect)) { _sourceDirect = liveSource; state.LightingDirty = true; }
             if (!state.LightingDirty)
             {
                 return;
@@ -142,34 +98,64 @@ namespace LumenFX.Core
             EnsureFields();
             VanillaSnapshot.Capture();
 
-            Gradient sourceDirect = VanillaSnapshot.CapturedDirect;
+            Gradient sourceDirect = Infrastructure.PropertyLedger.Baseline<Gradient>(_cachedDayNight, "m_LightColor");
             if (sourceDirect != null)
             {
-                _cachedDayNight.m_LightColor = Resample(sourceDirect, state, true);
+                Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_LightColor", classicColor ? ClassicCurve(sourceDirect) : state.LegacySceneLighting ? LegacyCurve(sourceDirect, state.LegacySceneWarmth) : Resample(sourceDirect, state, true));
             }
 
             var ambient = _cachedDayNight.m_AmbientColor;
-            Gradient sourceSky = VanillaSnapshot.CapturedSky;
+            Gradient sourceSky = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_SkyColor");
             if (_skyColorField != null && sourceSky != null)
             {
-                _skyColorField.SetValue(ambient, Resample(sourceSky, state, false));
+                Infrastructure.PropertyLedger.Write(ambient, "m_SkyColor", Resample(sourceSky, state, false));
             }
 
-            Gradient sourceEquator = VanillaSnapshot.CapturedEquator;
+            Gradient sourceEquator = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_EquatorColor");
             if (_equatorColorField != null && sourceEquator != null)
             {
-                _equatorColorField.SetValue(ambient, Resample(sourceEquator, state, false));
+                Infrastructure.PropertyLedger.Write(ambient, "m_EquatorColor", Resample(sourceEquator, state, false));
             }
 
-            Gradient sourceGround = VanillaSnapshot.CapturedGround;
+            Gradient sourceGround = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_GroundColor");
             if (_groundColorField != null && sourceGround != null)
             {
-                _groundColorField.SetValue(ambient, Resample(sourceGround, state, false));
+                Infrastructure.PropertyLedger.Write(ambient, "m_GroundColor", Resample(sourceGround, state, false));
             }
 
             state.LightingDirty = false;
         }
 
+
+        private static Gradient LegacyCurve(Gradient source, float warmth)
+        {
+            var keys = source.colorKeys;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                var c = keys[i].color;
+                c.r = Mathf.Clamp01(c.r * (1f + 0.15f * warmth));
+                c.b = Mathf.Clamp01(c.b * (1f - 0.15f * warmth));
+                keys[i] = new GradientColorKey(c, keys[i].time);
+            }
+            return new Gradient { colorKeys = keys, alphaKeys = source.alphaKeys };
+        }
+
+        private static Gradient ClassicCurve(Gradient source)
+        {
+            var keys = source.colorKeys;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                float daylight = Mathf.Clamp01(1f - Mathf.Abs(keys[i].time - 0.5f) * 4f);
+                keys[i] = new GradientColorKey(Color.Lerp(keys[i].color, Color.white, daylight * 0.35f), keys[i].time);
+            }
+            return new Gradient { colorKeys = keys, alphaKeys = source.alphaKeys };
+        }
+
+        private static void Absolute(string field, float value)
+        {
+            if (value > 0f) Infrastructure.PropertyLedger.Write(_cachedDayNight, field, value);
+            else Infrastructure.PropertyLedger.Release(_cachedDayNight, field);
+        }
 
         private static Gradient Resample(Gradient source, LightState state, bool isDirectLight)
         {

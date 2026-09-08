@@ -12,7 +12,6 @@ namespace LumenFX.Shadows
     [HarmonyPatch("UpdateLighting")]
     internal static class UpdateLightingPatch
     {
-        private static bool _adaptiveExposureActive;
 
         private static void Postfix(DayNightProperties __instance)
         {
@@ -22,34 +21,22 @@ namespace LumenFX.Shadows
                 return;
             }
 
-            if (state.AdaptiveShadows && RenderManager.instance != null && RenderManager.instance.MainLight != null)
+            if (RenderManager.instance != null && RenderManager.instance.MainLight != null)
             {
-                RenderManager.instance.MainLight.shadowBias = AdaptiveBias.Compute(state);
+                var light = RenderManager.instance.MainLight;
+                if (state.AdaptiveShadows) Infrastructure.PropertyLedger.Write(light, "shadowBias", AdaptiveBias.Compute(state));
+                else Infrastructure.PropertyLedger.Release(light, "shadowBias");
             }
-
-            bool exposureApplied = false;
-            if (state.SkyExposure > 0f && __instance != null) { __instance.m_Exposure = state.SkyExposure; exposureApplied = true; }
-            // La exposición es del tema del mapa cuando hay quien lo administre.
-            if (state.AdaptiveExposure && __instance != null && VanillaSnapshot.Captured
-                && !ThemeOwnership.AtmosphereIsManaged)
+            if (__instance == null) return;
+            bool classic = Infrastructure.FxInterop.ClassicRequest("sunStrength");
+            if (classic) Infrastructure.PropertyLedger.Write(__instance, "m_Exposure", 1f);
+            else if (state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged)
             {
-                float factor = AdaptiveExposure.Compute(__instance.normalizedTimeOfDay, state.AdaptiveExposureGain);
-                __instance.m_Exposure = (state.SkyExposure > 0f ? state.SkyExposure : VanillaSnapshot.CapturedExposure) * factor;
-                exposureApplied = true;
+                float baseline = state.SkyExposure > 0f ? state.SkyExposure : Infrastructure.PropertyLedger.Baseline<float>(__instance, "m_Exposure");
+                Infrastructure.PropertyLedger.Write(__instance, "m_Exposure", baseline * AdaptiveExposure.Compute(__instance.normalizedTimeOfDay, state.AdaptiveExposureGain));
             }
-
-            if (_adaptiveExposureActive && !exposureApplied)
-            {
-                if (__instance != null && VanillaSnapshot.Captured)
-                {
-                    __instance.m_Exposure = VanillaSnapshot.CapturedExposure;
-                }
-
-                AdaptiveExposure.Reset();
-            }
-
-            _adaptiveExposureActive = exposureApplied;
+            else if (state.SkyExposure > 0f) Infrastructure.PropertyLedger.Write(__instance, "m_Exposure", state.SkyExposure);
+            else { Infrastructure.PropertyLedger.Release(__instance, "m_Exposure"); AdaptiveExposure.Reset(); }
         }
     }
 }
-

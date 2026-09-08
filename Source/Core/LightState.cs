@@ -11,6 +11,10 @@ namespace LumenFX.Core
         public float Ambience = 1f;         // 0..2
         public float Warmth = 0f;           // -1..1, cold..warm
         public bool SkyTonemapping = true;
+        public int ToneEnabled = -1;
+        public bool LegacySceneLighting;
+        public float LegacySceneSunMultiplier = 1f;
+        public float LegacySceneWarmth;
 
         // Advanced per-source color controls (own semantics: positive temp =
         // warmer source, positive tint = greener source).
@@ -61,6 +65,7 @@ namespace LumenFX.Core
             GlobalTint = 0f;
             TwilightTint = 0f;
             SkyTonemapping = true;
+            ToneEnabled = -1; LegacySceneLighting = false; LegacySceneSunMultiplier = 1f; LegacySceneWarmth = 0f;
             Brightness = 0f;
             Contrast = 0f;
             Gamma = 2.2f;

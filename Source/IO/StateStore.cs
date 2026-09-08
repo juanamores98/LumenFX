@@ -16,6 +16,11 @@ namespace LumenFX.IO
         [XmlAttribute("schema")]
         public int Schema = 2;
 
+        [XmlElement("legacySceneLighting")] public bool LegacySceneLighting = Runtime.TunerRuntime.CurrentState.LegacySceneLighting;
+        [XmlElement("legacySceneSunMultiplier")] public float LegacySceneSunMultiplier = Runtime.TunerRuntime.CurrentState.LegacySceneSunMultiplier;
+        [XmlElement("legacySceneWarmth")] public float LegacySceneWarmth = Runtime.TunerRuntime.CurrentState.LegacySceneWarmth;
+        [XmlElement("toneEnabled")] public int ToneEnabled = Runtime.TunerRuntime.CurrentState.ToneEnabled;
+
         private float _SunStrength = Runtime.TunerRuntime.CurrentState.SunStrength;
         [XmlElement("sunStrength")] public float SunStrength { get => _SunStrength; set => _SunStrength = Clamp(value, 0f, 3f); }
         private float _MoonStrength = Runtime.TunerRuntime.CurrentState.MoonStrength;
@@ -82,6 +87,11 @@ namespace LumenFX.IO
 
         internal void Apply()
         {
+            if (ToneEnabled < -1 || ToneEnabled > 1) throw new ArgumentOutOfRangeException("ToneEnabled");
+            Runtime.TunerRuntime.CurrentState.LegacySceneSunMultiplier = Clamp(LegacySceneSunMultiplier, 0f, 3f);
+            Runtime.TunerRuntime.CurrentState.LegacySceneWarmth = Clamp(LegacySceneWarmth, -1f, 1f);
+            Runtime.TunerRuntime.CurrentState.LegacySceneLighting = LegacySceneLighting;
+            Runtime.TunerRuntime.CurrentState.ToneEnabled = ToneEnabled;
             Runtime.TunerRuntime.CurrentState.SunStrength = SunStrength;
             Runtime.TunerRuntime.CurrentState.MoonStrength = MoonStrength;
             Runtime.TunerRuntime.CurrentState.Ambience = Ambience;

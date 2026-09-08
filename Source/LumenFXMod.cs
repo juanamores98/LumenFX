@@ -79,9 +79,11 @@ namespace LumenFX
                 }
 
                 // El mezclador y el perfil de tono escriben siempre que el mod esta vivo.
-                string claims = "tone,lightColor,skyTonemapping,sunIntensity,moonIntensity";
+                string claims = "tone,lightColor,skyTonemapping";
+                if (state.SunPower > 0f || state.LegacySceneLighting || Infrastructure.FxInterop.ClassicRequest("sunStrength")) claims += ",sunIntensity";
+                if (state.MoonPower > 0f) claims += ",moonIntensity";
 
-                if (state.SkyExposure > 0f || (state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged))
+                if (Infrastructure.FxInterop.ClassicRequest("sunStrength") || state.SkyExposure > 0f || (state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged))
                 {
                     claims += ",exposure";
                 }
@@ -211,7 +213,53 @@ namespace LumenFX
             }
         }
 
+        public static void RefreshDerivedState() { if (_patched && !Runtime.TunerRuntime.CurrentState.VanillaMode) { Runtime.TunerRuntime.CurrentState.LightingDirty = true; Runtime.TunerRuntime.ApplyAll(); } NotifyStateChanged(); }
+        public static bool ReadyForSuite { get { return _patched && UnityEngine.Object.FindObjectOfType<DayNightProperties>() != null && GameObject.Find("Main Camera") != null; } }
+        public static string LastApplyError { get; private set; }
+        public static string ApplicationStatus { get; private set; }
+        public static event System.Action StateChanged;
+        public static void NotifyStateChanged()
+        {
+            var changed = StateChanged;
+            if (changed == null) return;
+            foreach (System.Action observer in changed.GetInvocationList())
+                try { observer(); } catch (System.Exception e) { UnityEngine.Debug.LogException(e); }
+        }
+        public static bool ValidateSuiteSection(string xml)
+        {
+            try
+            {
+                var doc = new System.Xml.XmlDocument { XmlResolver = null }; doc.LoadXml(xml);
+                return ParseSection(doc.DocumentElement, false);
+            }
+            catch (System.Exception e) { LastApplyError = e.Message; return false; }
+        }
         public static bool ApplySuiteSection(System.Xml.XmlElement element)
+        {
+            if (!ParseSection(element, false)) return false;
+            if (Infrastructure.FxTransaction.Active) return ParseSection(element, true);
+            string previous = ExportSuiteSection();
+            Infrastructure.FxTransaction.Begin();
+            try
+            {
+                if (!ParseSection(element, true)) throw new System.InvalidOperationException(LastApplyError);
+                Infrastructure.FxTransaction.Commit();
+                return true;
+            }
+            catch (System.Exception failure)
+            {
+                if (!Infrastructure.FxTransaction.Active) Infrastructure.FxTransaction.Begin();
+                var doc = new System.Xml.XmlDocument(); doc.LoadXml(previous);
+                bool restored = ParseSection(doc.DocumentElement, true) && ExportSuiteSection() == previous;
+                Infrastructure.FxTransaction.Abort();
+                LastApplyError = failure.Message;
+                ApplicationStatus = (restored && !failure.Message.StartsWith("PARTIAL:") ? "Failed; previous settings restored: " : "PARTIAL; rollback could not be verified: ") + failure.Message;
+                NotifyStateChanged();
+                return false;
+            }
+            finally { Infrastructure.FxTransaction.Abort(); }
+        }
+        private static bool ParseSection(System.Xml.XmlElement element, bool commit)
         {
             if (element == null || !element.Name.Equals("lumenfx", System.StringComparison.OrdinalIgnoreCase))
             {
@@ -220,6 +268,11 @@ namespace LumenFX
 
             try
             {
+                LastApplyError = string.Empty;
+                Infrastructure.FxStorage.LastError = string.Empty;
+                string schema = element.GetAttribute("schema");
+                if (schema.Length > 0 && schema != "2" && schema != "3") throw new System.ArgumentException("Unsupported preset schema: " + schema);
+
                 var state = new IO.StateDocument();
                 if (state == null)
                 {
@@ -235,7 +288,11 @@ namespace LumenFX
 
 
 
-                    if (name == "sunstrength") state.SunStrength = float.Parse(val, ci);
+                    if (name == "legacyscenelighting") state.LegacySceneLighting = bool.Parse(val);
+                    else if (name == "legacyscenesunmultiplier") state.LegacySceneSunMultiplier = Infrastructure.FxStorage.Clamp(float.Parse(val, ci), 0f, 3f);
+                    else if (name == "legacyscenewarmth") state.LegacySceneWarmth = Infrastructure.FxStorage.Clamp(float.Parse(val, ci), -1f, 1f);
+                    else if (name == "toneenabled") state.ToneEnabled = int.Parse(val, ci);
+                    else if (name == "sunstrength") state.SunStrength = float.Parse(val, ci);
                     else if (name == "moonstrength") state.MoonStrength = float.Parse(val, ci);
                     else if (name == "ambience") state.Ambience = float.Parse(val, ci);
                     else if (name == "warmth") state.Warmth = float.Parse(val, ci);
@@ -267,13 +324,22 @@ namespace LumenFX
                     else if (name == "vanillamode") state.VanillaMode = bool.Parse(val);
                 }
 
+                if (state.ToneEnabled < -1 || state.ToneEnabled > 1) throw new System.ArgumentException("Invalid camera tone mode.");
+                if (!commit) return true;
                 state.Apply();
                 TunerRuntime.ApplyAll();
-                IO.StateStore.Save();
+                IO.StateStore.SaveImmediate();
+                if (!string.IsNullOrEmpty(Infrastructure.FxStorage.LastError)) throw new System.IO.IOException(Infrastructure.FxStorage.LastError);
+                ApplicationStatus = "Applied to settings; verify appearance in game";
+                Infrastructure.FxInterop.RefreshCompanions();
+                NotifyStateChanged();
                 return true;
             }
             catch (System.Exception e)
             {
+                LastApplyError = e.Message;
+                ApplicationStatus = "Failed: " + e.Message;
+
                 Debug.LogException(e);
                 return false;
             }

@@ -18,6 +18,7 @@ namespace LumenFX.Core
         private void OnDestroy()
         {
             StateStore.SaveImmediate(); FxModule.CloseStandalone();
+            TunerRuntime.RestoreVanilla(); Infrastructure.PropertyLedger.Forget();
             AdaptiveBias.ClearCache(); LightingMixer.ClearCache(); VanillaSnapshot.ResetCapture();
             TunerRuntime.CurrentState.LightingDirty = true;
         }

@@ -1,4 +1,4 @@
-<lumenfx>
+<lumenfx schema="3">
   <vanillaMode>false</vanillaMode>
   <sunStrength>1</sunStrength>
   <moonStrength>0.745</moonStrength>
@@ -27,4 +27,6 @@
   <skyExposure>1.102</skyExposure>
   <adaptiveExposure>false</adaptiveExposure>
   <adaptiveExposureGain>1</adaptiveExposureGain>
+  <toneEnabled>1</toneEnabled>
+  <legacySceneLighting>false</legacySceneLighting>
 </lumenfx>

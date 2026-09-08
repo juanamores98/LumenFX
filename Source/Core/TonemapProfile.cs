@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace LumenFX.Core
 {
@@ -45,20 +45,22 @@ namespace LumenFX.Core
                 return;
             }
 
+            if (state.ToneEnabled < 0) Infrastructure.PropertyLedger.Release(toneMap, "enabled");
+            else Infrastructure.PropertyLedger.Write(toneMap, "enabled", state.ToneEnabled == 1);
             float b = state.Brightness;
             float c = state.Contrast;
 
-            toneMap.m_ToneMappingGamma = state.Gamma;
-            toneMap.m_ToneMappingBoostFactor = BoostFor(b);
-            toneMap.m_Luminance = 0.10f + 0.02f * c;
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingGamma", state.Gamma);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingBoostFactor", BoostFor(b));
+            Infrastructure.PropertyLedger.Write(toneMap, "m_Luminance", 0.10f + 0.02f * c);
 
-            toneMap.m_ToneMappingParamsFilmic.A = 0.50f + 0.20f * c;
-            toneMap.m_ToneMappingParamsFilmic.B = 0.25f - 0.15f * c;
-            toneMap.m_ToneMappingParamsFilmic.C = 0.10f - 0.01f * c;
-            toneMap.m_ToneMappingParamsFilmic.D = 0.70f + 0.20f * c;
-            toneMap.m_ToneMappingParamsFilmic.E = 0.01f;
-            toneMap.m_ToneMappingParamsFilmic.F = 0.25f - 0.12f * c;
-            toneMap.m_ToneMappingParamsFilmic.W = 11.2f + 2.5f * c;
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.A", 0.50f + 0.20f * c);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.B", 0.25f - 0.15f * c);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.C", 0.10f - 0.01f * c);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.D", 0.70f + 0.20f * c);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.E", 0.01f);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.F", 0.25f - 0.12f * c);
+            Infrastructure.PropertyLedger.Write(toneMap, "m_ToneMappingParamsFilmic.W", 11.2f + 2.5f * c);
         }
     }
 }

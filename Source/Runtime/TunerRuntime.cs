@@ -27,7 +27,7 @@ namespace LumenFX.Runtime
             VanillaSnapshot.Capture();
             LightingMixer.Apply(_state);
             TonemapProfile.Apply(_state);
-            QualitySettings.shadows = _state.SoftShadows ? ShadowQuality.All : ShadowQuality.HardOnly;
+            Infrastructure.PropertyLedger.Write(typeof(QualitySettings), "shadows", _state.SoftShadows ? ShadowQuality.All : ShadowQuality.HardOnly);
         }
 
         /// <summary>

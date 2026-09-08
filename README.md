@@ -44,3 +44,8 @@ Las temperaturas, tintes, gamma, brillo y bias usan fórmulas propias. La import
 Código propio bajo **MIT-0**, [LICENSE](LICENSE).
 
 Harmony 1.2.0.1 conserva MIT, con aviso en `NOTICE` y texto completo en `licenses/Harmony-MIT.txt`. Sigue pendiente verificar su convivencia con el proveedor de Harmony de la instalación.
+
+
+## Consolidación 2.1
+
+Cambios de propiedad, Game, presets y convivencia: [contrato v3 y pruebas](docs/CONSOLIDACION-v3.md). Actualizar los cuatro FX juntos para usar suites.

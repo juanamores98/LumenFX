@@ -114,19 +114,19 @@ namespace LumenFX.Core
                 return;
             }
 
-            _direct = dayNight.m_LightColor;
-            _skyTonemapping = dayNight.m_Tonemapping;
-            _exposure = dayNight.m_Exposure;
-            _rayleigh = dayNight.m_RayleighScattering;
-            _mie = dayNight.m_MieScattering;
-            _sunIntensity = dayNight.m_SunIntensity;
-            _moonIntensity = dayNight.m_MoonIntensity;
+            _direct = Infrastructure.PropertyLedger.Baseline<Gradient>(dayNight, "m_LightColor");
+            _skyTonemapping = Infrastructure.PropertyLedger.Baseline<bool>(dayNight, "m_Tonemapping");
+            _exposure = Infrastructure.PropertyLedger.Baseline<float>(dayNight, "m_Exposure");
+            _rayleigh = Infrastructure.PropertyLedger.Baseline<float>(dayNight, "m_RayleighScattering");
+            _mie = Infrastructure.PropertyLedger.Baseline<float>(dayNight, "m_MieScattering");
+            _sunIntensity = Infrastructure.PropertyLedger.Baseline<float>(dayNight, "m_SunIntensity");
+            _moonIntensity = Infrastructure.PropertyLedger.Baseline<float>(dayNight, "m_MoonIntensity");
 
             var ambientType = typeof(DayNightProperties.AmbientColor);
             var ambient = dayNight.m_AmbientColor;
-            _sky = (Gradient)ambientType.GetField("m_SkyColor", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ambient);
-            _equator = (Gradient)ambientType.GetField("m_EquatorColor", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ambient);
-            _ground = (Gradient)ambientType.GetField("m_GroundColor", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ambient);
+            _sky = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_SkyColor");
+            _equator = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_EquatorColor");
+            _ground = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_GroundColor");
 
             var cameraObject = GameObject.Find("Main Camera");
             var toneMap = cameraObject != null ? cameraObject.GetComponent<ColossalFramework.ToneMapping>() : null;
@@ -151,67 +151,7 @@ namespace LumenFX.Core
 
         internal static void Restore()
         {
-            if (!_captured)
-            {
-                return;
-            }
-
-            var dayNight = Object.FindObjectOfType<DayNightProperties>();
-            if (dayNight != null)
-            {
-                // Lo que administra el gestor de temas no se repone: lo capturado puede ser
-                // de antes de que el tema se aplicara, y reponerlo lo borraría.
-                if (!ThemeOwnership.AtmosphereIsManaged)
-                {
-                    dayNight.m_Exposure = _exposure;
-                    dayNight.m_RayleighScattering = _rayleigh;
-                    dayNight.m_MieScattering = _mie;
-                }
-
-                dayNight.m_Tonemapping = _skyTonemapping;
-                dayNight.m_SunIntensity = _sunIntensity;
-                dayNight.m_MoonIntensity = _moonIntensity;
-
-                if (_direct != null)
-                {
-                    dayNight.m_LightColor = _direct;
-                }
-
-                var ambientType = typeof(DayNightProperties.AmbientColor);
-                var ambient = dayNight.m_AmbientColor;
-                if (_sky != null)
-                {
-                    ambientType.GetField("m_SkyColor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(ambient, _sky);
-                }
-
-                if (_equator != null)
-                {
-                    ambientType.GetField("m_EquatorColor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(ambient, _equator);
-                }
-
-                if (_ground != null)
-                {
-                    ambientType.GetField("m_GroundColor", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(ambient, _ground);
-                }
-            }
-
-            var cameraObject = GameObject.Find("Main Camera");
-            var toneMap = cameraObject != null ? cameraObject.GetComponent<ColossalFramework.ToneMapping>() : null;
-            if (toneMap != null && _toneCaptured)
-            {
-                toneMap.m_ToneMappingGamma = _gamma;
-                toneMap.m_ToneMappingBoostFactor = _boost;
-                toneMap.m_Luminance = _luminance;
-                toneMap.m_ToneMappingParamsFilmic.A = _filmicA;
-                toneMap.m_ToneMappingParamsFilmic.B = _filmicB;
-                toneMap.m_ToneMappingParamsFilmic.C = _filmicC;
-                toneMap.m_ToneMappingParamsFilmic.D = _filmicD;
-                toneMap.m_ToneMappingParamsFilmic.E = _filmicE;
-                toneMap.m_ToneMappingParamsFilmic.F = _filmicF;
-                toneMap.m_ToneMappingParamsFilmic.W = _filmicW;
-            }
-
-            QualitySettings.shadows = (ShadowQuality)_shadowQuality;
+            Infrastructure.PropertyLedger.ReleaseAll();
             ResetCapture();
         }
     }
