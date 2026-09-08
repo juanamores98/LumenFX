@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using ICities;
 using UnityEngine;
 using Harmony;
@@ -79,21 +79,11 @@ namespace LumenFX
                 }
 
                 // El mezclador y el perfil de tono escriben siempre que el mod esta vivo.
-                string claims = "tone,lightColor,skyTonemapping";
+                string claims = "tone,lightColor,skyTonemapping,sunIntensity,moonIntensity";
 
-                if (state.AdaptiveExposure)
+                if (state.SkyExposure > 0f || (state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged))
                 {
                     claims += ",exposure";
-                }
-
-                if (state.SunPower > 0f)
-                {
-                    claims += ",sunIntensity";
-                }
-
-                if (state.MoonPower > 0f)
-                {
-                    claims += ",moonIntensity";
                 }
 
                 if (state.SkyRayleigh > 0f || state.SkyMie > 0f)
@@ -140,6 +130,7 @@ namespace LumenFX
 
         public void OnEnabled()
         {
+            IO.StateStore.Load();
             // Covers the case of enabling the mod while a map is already
             // running; the gameplay scene replaces menu-time hosts anyway.
             CreateHost();
@@ -156,6 +147,8 @@ namespace LumenFX
 
         public void OnDisabled()
         {
+            UI.UuiButton.Unregister();
+            TunerRuntime.RestoreVanilla();
             DestroyHosts();
 
             if (_patched && _harmony != null)
@@ -164,6 +157,14 @@ namespace LumenFX
                 _harmony = null;
                 _patched = false;
             }
+        }
+
+        public void OnSettingsUI(UIHelperBase helper)
+        {
+            var group = helper.AddGroup("LumenFX");
+            group.AddButton("VANILLA", FxModule.Release);
+            group.AddButton("OPTIMIZED / Default", FxModule.ApplyOptimized);
+            group.AddButton("Open compact panel", () => FxModule.OpenStandalone());
         }
 
         private void CreateHost()
@@ -212,14 +213,14 @@ namespace LumenFX
 
         public static bool ApplySuiteSection(System.Xml.XmlElement element)
         {
-            if (element == null)
+            if (element == null || !element.Name.Equals("lumenfx", System.StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
             try
             {
-                var state = TunerRuntime.CurrentState;
+                var state = new IO.StateDocument();
                 if (state == null)
                 {
                     return false;
@@ -231,43 +232,44 @@ namespace LumenFX
                     if (node.NodeType != System.Xml.XmlNodeType.Element) continue;
                     string name = node.Name.ToLowerInvariant();
                     string val = node.InnerText != null ? node.InnerText.Trim() : string.Empty;
-                    float f;
-                    bool b;
 
-                    if (name == "sunstrength" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SunStrength = f;
-                    else if (name == "moonstrength" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.MoonStrength = f;
-                    else if (name == "ambience" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.Ambience = f;
-                    else if (name == "warmth" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.Warmth = f;
-                    else if (name == "suntemp" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SunTemp = f;
-                    else if (name == "suntint" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SunTint = f;
-                    else if (name == "moontemp" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.MoonTemp = f;
-                    else if (name == "moontint" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.MoonTint = f;
-                    else if (name == "skytemp" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyTemp = f;
-                    else if (name == "skytint" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyTint = f;
-                    else if (name == "globaltint" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.GlobalTint = f;
-                    else if (name == "twilighttint" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.TwilightTint = f;
-                    else if (name == "skytonemapping" && bool.TryParse(val, out b)) state.SkyTonemapping = b;
-                    else if (name == "brightness" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.Brightness = f;
-                    else if (name == "contrast" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.Contrast = f;
-                    else if (name == "gamma" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.Gamma = f;
-                    else if (name == "adaptiveshadows" && bool.TryParse(val, out b)) state.AdaptiveShadows = b;
-                    else if (name == "forcelowbias" && bool.TryParse(val, out b)) state.ForceLowBias = b;
-                    else if (name == "biasscale" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.BiasScale = f;
-                    else if (name == "softshadows" && bool.TryParse(val, out b)) state.SoftShadows = b;
-                    else if (name == "adaptiveexposure" && bool.TryParse(val, out b)) state.AdaptiveExposure = b;
-                    else if (name == "adaptiveexposuregain" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.AdaptiveExposureGain = f;
-                    else if (name == "skyrayleigh" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyRayleigh = f;
-                    else if (name == "skymie" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SkyMie = f;
-                    else if (name == "sunpower" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.SunPower = f;
-                    else if (name == "moonpower" && float.TryParse(val, System.Globalization.NumberStyles.Float, ci, out f)) state.MoonPower = f;
+
+
+                    if (name == "sunstrength") state.SunStrength = float.Parse(val, ci);
+                    else if (name == "moonstrength") state.MoonStrength = float.Parse(val, ci);
+                    else if (name == "ambience") state.Ambience = float.Parse(val, ci);
+                    else if (name == "warmth") state.Warmth = float.Parse(val, ci);
+                    else if (name == "suntemp") state.SunTemp = float.Parse(val, ci);
+                    else if (name == "suntint") state.SunTint = float.Parse(val, ci);
+                    else if (name == "moontemp") state.MoonTemp = float.Parse(val, ci);
+                    else if (name == "moontint") state.MoonTint = float.Parse(val, ci);
+                    else if (name == "skytemp") state.SkyTemp = float.Parse(val, ci);
+                    else if (name == "skytint") state.SkyTint = float.Parse(val, ci);
+                    else if (name == "globaltint") state.GlobalTint = float.Parse(val, ci);
+                    else if (name == "twilighttint") state.TwilightTint = float.Parse(val, ci);
+                    else if (name == "skytonemapping") state.SkyTonemapping = bool.Parse(val);
+                    else if (name == "brightness") state.Brightness = float.Parse(val, ci);
+                    else if (name == "contrast") state.Contrast = float.Parse(val, ci);
+                    else if (name == "gamma") state.Gamma = float.Parse(val, ci);
+                    else if (name == "adaptiveshadows") state.AdaptiveShadows = bool.Parse(val);
+                    else if (name == "forcelowbias") state.ForceLowBias = bool.Parse(val);
+                    else if (name == "biasscale") state.BiasScale = float.Parse(val, ci);
+                    else if (name == "softshadows") state.SoftShadows = bool.Parse(val);
+                    else if (name == "adaptiveexposure") state.AdaptiveExposure = bool.Parse(val);
+                    else if (name == "adaptiveexposuregain") state.AdaptiveExposureGain = float.Parse(val, ci);
+                    else if (name == "skyexposure") state.SkyExposure = float.Parse(val, ci);
+                    else if (name == "skyrayleigh") state.SkyRayleigh = float.Parse(val, ci);
+                    else if (name == "skymie") state.SkyMie = float.Parse(val, ci);
+                    else if (name == "sunpower") state.SunPower = float.Parse(val, ci);
+                    else if (name == "moonpower") state.MoonPower = float.Parse(val, ci);
                     // El modo vanilla decide si el mod escribe o no, y no se podia expresar en
                     // un perfil de suite: un perfil no tenia forma de encenderlo ni apagarlo.
-                    else if (name == "vanillamode" && bool.TryParse(val, out b)) state.VanillaMode = b;
+                    else if (name == "vanillamode") state.VanillaMode = bool.Parse(val);
                 }
 
-                state.LightingDirty = true;
+                state.Apply();
                 TunerRuntime.ApplyAll();
-                IO.StateStore.SaveImmediate();
+                IO.StateStore.Save();
                 return true;
             }
             catch (System.Exception e)
@@ -279,66 +281,17 @@ namespace LumenFX
 
         public static string ExportSuiteSection()
         {
-            var s = TunerRuntime.CurrentState;
-            var ci = System.Globalization.CultureInfo.InvariantCulture;
-            return string.Format(
-                "  <lumenfx>\n" +
-                "    <sunStrength>{0}</sunStrength>\n" +
-                "    <moonStrength>{1}</moonStrength>\n" +
-                "    <ambience>{2}</ambience>\n" +
-                "    <warmth>{3}</warmth>\n" +
-                "    <sunTemp>{4}</sunTemp>\n" +
-                "    <sunTint>{5}</sunTint>\n" +
-                "    <moonTemp>{6}</moonTemp>\n" +
-                "    <moonTint>{7}</moonTint>\n" +
-                "    <skyTemp>{8}</skyTemp>\n" +
-                "    <skyTint>{9}</skyTint>\n" +
-                "    <globalTint>{10}</globalTint>\n" +
-                "    <twilightTint>{11}</twilightTint>\n" +
-                "    <skyTonemapping>{12}</skyTonemapping>\n" +
-                "    <brightness>{13}</brightness>\n" +
-                "    <contrast>{14}</contrast>\n" +
-                "    <gamma>{15}</gamma>\n" +
-                "    <adaptiveShadows>{16}</adaptiveShadows>\n" +
-                "    <forceLowBias>{17}</forceLowBias>\n" +
-                "    <biasScale>{18}</biasScale>\n" +
-                "    <softShadows>{19}</softShadows>\n" +
-                "    <adaptiveExposure>{20}</adaptiveExposure>\n" +
-                "    <adaptiveExposureGain>{21}</adaptiveExposureGain>\n" +
-                "    <skyRayleigh>{22}</skyRayleigh>\n" +
-                "    <skyMie>{23}</skyMie>\n" +
-                "    <sunPower>{24}</sunPower>\n" +
-                "    <moonPower>{25}</moonPower>\n" +
-                "    <vanillaMode>{26}</vanillaMode>\n" +
-                "  </lumenfx>",
-                s.SunStrength.ToString("0.##", ci),
-                s.MoonStrength.ToString("0.##", ci),
-                s.Ambience.ToString("0.##", ci),
-                s.Warmth.ToString("0.##", ci),
-                s.SunTemp.ToString("0.##", ci),
-                s.SunTint.ToString("0.##", ci),
-                s.MoonTemp.ToString("0.##", ci),
-                s.MoonTint.ToString("0.##", ci),
-                s.SkyTemp.ToString("0.##", ci),
-                s.SkyTint.ToString("0.##", ci),
-                s.GlobalTint.ToString("0.##", ci),
-                s.TwilightTint.ToString("0.##", ci),
-                s.SkyTonemapping.ToString().ToLowerInvariant(),
-                s.Brightness.ToString("0.##", ci),
-                s.Contrast.ToString("0.##", ci),
-                s.Gamma.ToString("0.##", ci),
-                s.AdaptiveShadows.ToString().ToLowerInvariant(),
-                s.ForceLowBias.ToString().ToLowerInvariant(),
-                s.BiasScale.ToString("0.##", ci),
-                s.SoftShadows.ToString().ToLowerInvariant(),
-                s.AdaptiveExposure.ToString().ToLowerInvariant(),
-                s.AdaptiveExposureGain.ToString("0.##", ci),
-                s.SkyRayleigh.ToString("0.###", ci),
-                s.SkyMie.ToString("0.###", ci),
-                s.SunPower.ToString("0.##", ci),
-                s.MoonPower.ToString("0.##", ci),
-                s.VanillaMode.ToString().ToLowerInvariant());
+            var source = new System.Xml.XmlDocument();
+            using (var writer = new System.IO.StringWriter(System.Globalization.CultureInfo.InvariantCulture))
+            {
+                new System.Xml.Serialization.XmlSerializer(typeof(IO.StateDocument)).Serialize(writer, new IO.StateDocument());
+                source.LoadXml(writer.ToString());
+            }
+            var doc = new System.Xml.XmlDocument();
+            var section = doc.CreateElement("lumenfx"); doc.AppendChild(section);
+            foreach (System.Xml.XmlNode node in source.DocumentElement.ChildNodes)
+                if (node.Name != "windowX" && node.Name != "windowY") section.AppendChild(doc.ImportNode(node, true));
+            return section.OuterXml;
         }
     }
 }
-

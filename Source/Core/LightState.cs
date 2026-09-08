@@ -1,4 +1,4 @@
-﻿namespace LumenFX.Core
+namespace LumenFX.Core
 {
     /// <summary>
     /// v2 tuning state. Parameter names, ranges and defaults are owned by
@@ -32,13 +32,14 @@
         public bool SoftShadows = true;
         public bool AdaptiveExposure = false; // own day/night exposure compensation
         public float AdaptiveExposureGain = 0.5f; // 0..1
+        public float SkyExposure;          // 0 = captured map exposure
         public float SkyRayleigh;           // absolute m_RayleighScattering, 0 = keep the map theme value
         public float SkyMie;                // absolute m_MieScattering, 0 = keep the map theme value
         public float SunPower;              // absolute m_SunIntensity, 0 = keep game value
         public float MoonPower;             // absolute m_MoonIntensity, 0 = keep game value
         public float WindowX = 620f;
         public float WindowY = 300f;
-        public bool VanillaMode;            // suspend everything, game untouched
+        public bool VanillaMode = true;            // suspend everything, game untouched
 
         public bool LightingDirty = true;
 
@@ -69,6 +70,7 @@
             SoftShadows = true;
             AdaptiveExposure = false;
             AdaptiveExposureGain = 0.5f;
+            SkyExposure = 0f;
             SkyRayleigh = 0f;
             SkyMie = 0f;
             SunPower = 0f;

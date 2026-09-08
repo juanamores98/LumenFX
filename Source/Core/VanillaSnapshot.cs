@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using UnityEngine;
 
 namespace LumenFX.Core
@@ -38,6 +38,8 @@ namespace LumenFX.Core
         private static float _moonIntensity;
 
         private static int _shadowQuality;
+        private static bool _skyTonemapping;
+        private static bool _toneCaptured;
 
         internal static bool Captured
         {
@@ -92,6 +94,7 @@ namespace LumenFX.Core
         internal static void ResetCapture()
         {
             _captured = false;
+            _toneCaptured = false;
             _direct = null;
             _sky = null;
             _equator = null;
@@ -112,6 +115,7 @@ namespace LumenFX.Core
             }
 
             _direct = dayNight.m_LightColor;
+            _skyTonemapping = dayNight.m_Tonemapping;
             _exposure = dayNight.m_Exposure;
             _rayleigh = dayNight.m_RayleighScattering;
             _mie = dayNight.m_MieScattering;
@@ -128,6 +132,7 @@ namespace LumenFX.Core
             var toneMap = cameraObject != null ? cameraObject.GetComponent<ColossalFramework.ToneMapping>() : null;
             if (toneMap != null)
             {
+                _toneCaptured = true;
                 _gamma = toneMap.m_ToneMappingGamma;
                 _boost = toneMap.m_ToneMappingBoostFactor;
                 _luminance = toneMap.m_Luminance;
@@ -163,6 +168,7 @@ namespace LumenFX.Core
                     dayNight.m_MieScattering = _mie;
                 }
 
+                dayNight.m_Tonemapping = _skyTonemapping;
                 dayNight.m_SunIntensity = _sunIntensity;
                 dayNight.m_MoonIntensity = _moonIntensity;
 
@@ -191,7 +197,7 @@ namespace LumenFX.Core
 
             var cameraObject = GameObject.Find("Main Camera");
             var toneMap = cameraObject != null ? cameraObject.GetComponent<ColossalFramework.ToneMapping>() : null;
-            if (toneMap != null)
+            if (toneMap != null && _toneCaptured)
             {
                 toneMap.m_ToneMappingGamma = _gamma;
                 toneMap.m_ToneMappingBoostFactor = _boost;
@@ -206,6 +212,7 @@ namespace LumenFX.Core
             }
 
             QualitySettings.shadows = (ShadowQuality)_shadowQuality;
+            ResetCapture();
         }
     }
 }

@@ -1,0 +1,13 @@
+LumenFX's own contributions are licensed under MIT-0; see LICENSE.
+
+Bundled dependency: Harmony 1.2.0.1, Copyright (c) 2017 Andreas Pardeike.
+License: MIT, full text in licenses/Harmony-MIT.txt (or Harmony-MIT.txt in an installed package).
+Source revision: https://github.com/pardeike/Harmony/tree/v1.2.0.1
+License source: https://raw.githubusercontent.com/pardeike/Harmony/v1.2.0.1/LICENSE
+Bundled file: lib/0Harmony.dll, file/product version 1.2.0.1.
+SHA256: E271D22A7C32BFCA105D0E471C04EEE14EEC6142D37A30CD73CB7D32C7D1DD0F
+This pre-existing binary was retained, not replaced or upgraded, on 2026-09-08.
+The MIT-0 license for LumenFX does not replace Harmony's MIT terms.
+
+Cities: Skylines and Unity assemblies are build/runtime references supplied by
+the game; they are not part of the mod's redistributable package.

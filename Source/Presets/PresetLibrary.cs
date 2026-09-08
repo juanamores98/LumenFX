@@ -39,6 +39,13 @@ namespace LumenFX.Presets
         [XmlElement("softShadows")] public bool SoftShadows = true;
         [XmlElement("adaptiveExposure")] public bool AdaptiveExposure = false;
         [XmlElement("adaptiveExposureGain")] public float AdaptiveExposureGain = 0.5f;
+        [XmlElement("sunPower")] public float SunPower;
+        [XmlElement("moonPower")] public float MoonPower;
+        [XmlElement("skyExposure")] public float SkyExposure;
+        [XmlElement("skyRayleigh")] public float SkyRayleigh;
+        [XmlElement("skyMie")] public float SkyMie;
+        [XmlElement("vanillaMode")] public bool VanillaMode;
+
     }
 
 
@@ -76,6 +83,81 @@ namespace LumenFX.Presets
             return presets;
         }
 
+        internal static PresetDocument Capture(string name)
+        {
+            var state = Runtime.TunerRuntime.CurrentState;
+            return new PresetDocument
+            {
+                Name = Sanitize(name),
+                SunStrength = state.SunStrength,
+                MoonStrength = state.MoonStrength,
+                Ambience = state.Ambience,
+                Warmth = state.Warmth,
+                SunTemp = state.SunTemp,
+                SunTint = state.SunTint,
+                MoonTemp = state.MoonTemp,
+                MoonTint = state.MoonTint,
+                SkyTemp = state.SkyTemp,
+                SkyTint = state.SkyTint,
+                GlobalTint = state.GlobalTint,
+                TwilightTint = state.TwilightTint,
+                SkyTonemapping = state.SkyTonemapping,
+                Brightness = state.Brightness,
+                Contrast = state.Contrast,
+                Gamma = state.Gamma,
+                AdaptiveShadows = state.AdaptiveShadows,
+                ForceLowBias = state.ForceLowBias,
+                BiasScale = state.BiasScale,
+                SoftShadows = state.SoftShadows,
+                AdaptiveExposure = state.AdaptiveExposure,
+                AdaptiveExposureGain = state.AdaptiveExposureGain,
+                SunPower = state.SunPower,
+                MoonPower = state.MoonPower,
+                SkyExposure = state.SkyExposure,
+                SkyRayleigh = state.SkyRayleigh,
+                SkyMie = state.SkyMie,
+                VanillaMode = state.VanillaMode,
+            };
+        }
+
+        internal static void Apply(PresetDocument preset)
+        {
+            var pending = new IO.StateDocument
+            {
+                SunStrength = preset.SunStrength,
+                MoonStrength = preset.MoonStrength,
+                Ambience = preset.Ambience,
+                Warmth = preset.Warmth,
+                SunTemp = preset.SunTemp,
+                SunTint = preset.SunTint,
+                MoonTemp = preset.MoonTemp,
+                MoonTint = preset.MoonTint,
+                SkyTemp = preset.SkyTemp,
+                SkyTint = preset.SkyTint,
+                GlobalTint = preset.GlobalTint,
+                TwilightTint = preset.TwilightTint,
+                SkyTonemapping = preset.SkyTonemapping,
+                Brightness = preset.Brightness,
+                Contrast = preset.Contrast,
+                Gamma = preset.Gamma,
+                AdaptiveShadows = preset.AdaptiveShadows,
+                ForceLowBias = preset.ForceLowBias,
+                BiasScale = preset.BiasScale,
+                SoftShadows = preset.SoftShadows,
+                AdaptiveExposure = preset.AdaptiveExposure,
+                AdaptiveExposureGain = preset.AdaptiveExposureGain,
+                SunPower = preset.SunPower,
+                MoonPower = preset.MoonPower,
+                SkyExposure = preset.SkyExposure,
+                SkyRayleigh = preset.SkyRayleigh,
+                SkyMie = preset.SkyMie,
+                VanillaMode = preset.VanillaMode,
+            };
+            pending.Apply();
+            Runtime.TunerRuntime.ApplyAll();
+            IO.StateStore.Save();
+        }
+
         internal static bool Exists(string name)
         {
             return File.Exists(PathFor(name));
@@ -84,10 +166,7 @@ namespace LumenFX.Presets
         internal static void Save(PresetDocument preset)
         {
             EnsureFolder();
-            using (var writer = new StreamWriter(PathFor(preset.Name)))
-            {
-                new XmlSerializer(typeof(PresetDocument)).Serialize(writer, preset);
-            }
+            Infrastructure.FxStorage.WriteXml(PathFor(preset.Name), preset);
         }
 
         internal static void Delete(PresetDocument preset)
@@ -231,7 +310,7 @@ namespace LumenFX.Presets
                 GlobalTint = Mathf.Clamp(v[1], -1f, 1f),
                 TwilightTint = Mathf.Clamp(v[9], -1f, 1f),
                 SkyTonemapping = skyTonemapping,
-                Brightness = Mathf.Clamp(v[10] <= 0.001f ? 0f : -0.4f * (v[10] / 0.7f), -1f, 1f),
+                Brightness = Mathf.Clamp(-0.4f * (v[10] / 0.7f), -1f, 1f),
                 Contrast = Mathf.Clamp(v[12], -1f, 1f),
                 Gamma = Mathf.Clamp(2.6f * (((v[11] + 1f) / 4f) + 0.75f), 1.5f, 3.5f),
                 AdaptiveShadows = true,

@@ -14,6 +14,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Remove="tests\**\*.cs" />
+        <EmbeddedResource Include="BuiltIns\Optimized.xml" />
         <Reference Include="Assembly-CSharp" />
         <Reference Include="ColossalManaged" />
         <Reference Include="ICities" />
@@ -26,16 +28,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="BuiltIns\*.lumenfx.xml" />
+        <None Update="LICENSE;NOTICE;licenses\Harmony-MIT.txt" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
-    <Target Name="DeployToModDirectory" AfterTargets="Build">
+    <Target Name="DeployToModDirectory" AfterTargets="Build" Condition="'$(DeployMod)' == 'true'">
         <PropertyGroup>
             <DeployDir>$(LOCALAPPDATA)/Colossal Order/Cities_Skylines/Addons/Mods/LumenFX/</DeployDir>
         </PropertyGroup>
         <MakeDir Directories="$(DeployDir)" />
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DeployDir)" />
         <Copy SourceFiles="$(TargetDir)0Harmony.dll" DestinationFolder="$(DeployDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(MSBuildProjectDirectory)/LICENSE;$(MSBuildProjectDirectory)/NOTICE;$(MSBuildProjectDirectory)/licenses/Harmony-MIT.txt" DestinationFolder="$(DeployDir)" />
         <Message Importance="high" Text="Deployed to $(DeployDir)" />
     </Target>
 

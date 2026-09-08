@@ -1,131 +1,58 @@
-# LumenFX — arquitectura y cambios
+# Arquitectura actual de LumenFX
 
-Documento ejecutivo. Estado a día de hoy. `DESIGN.md` es la especificación
-funcional original; este documento describe cómo está construido el mod hoy y
-qué cambió en el último ciclo.
+Revisión 2026-09-08. El historial conserva la descripción anterior de ventanas y presets.
 
-## Qué manda este mod
+## Recorrido
 
-Dentro de la suite FX cada propiedad del juego tiene **un solo dueño**. LumenFX
-es el dueño de la luz y del tono:
+1. Entrada del mod y anfitrión: configuración global y servicios del nivel.
+2. Modelo: `Core/LightState.cs` y documento temporal `IO/StateStore.cs`. El XML se lee en un documento temporal validado antes de copiarlo al estado vivo.
+3. Motor: `Core/LightingMixer.cs`, `TonemapProfile.cs`, `VanillaSnapshot.cs` y `Shadows/UpdateLightingPatch.cs`. Captura antes de escribir; limpia referencias y caches al descargar.
+4. `FxModule` expone estado y panel. `UI/PanelView.cs` contiene disposición vertical, controles nativos y refresco sin escribir.
+5. `Infrastructure/FxStorage.cs` proporciona escritura segura, validación de finitos y reconocimiento de la receta; `FxInterop.cs` consulta reclamaciones sin dependencia obligatoria del compañero.
 
-| Materia | Campos del juego |
-|---|---|
-| Curva solar | `DayNightProperties.m_LightColor` |
-| Ambiente | `m_SkyColor`, `m_EquatorColor`, `m_GroundColor` — privados del tipo de ambiente, por reflexión |
-| Intensidades | `m_SunIntensity`, `m_MoonIntensity`, `m_Exposure` |
-| Tono filmic | `ColossalFramework.ToneMapping` |
-| Cielo físico | `m_RayleighScattering`, `m_MieScattering` |
-| Sombras | `QualitySettings.shadows`, sesgo adaptativo |
+Se guardan y exportan todas las potencias y propiedades del cielo. Se reconstruye la iluminación en otra ciudad, se capturan/restauran exposición y sky tonemapping, y los presets conservan los nuevos campos. Importación .light por acción explícita y panel nativo compacto.
 
-`ActiveClaims` publica en cada momento qué campos está escribiendo, para que los
-otros mods de la suite sepan de qué apartarse. SceneFX y ClassicLightFX le piden
-el tono y la calidez por `ApplySuiteSection` en vez de escribirlos.
+## Modos
 
-**Theme Mixer tiene prioridad.** `ThemeOwnership` detecta el ensamblado
-`ThemeMixer`; cuando está, LumenFX puede escribir valores deliberados sobre los
-seis campos de atmósfera que ese mod gestiona, pero **no restaura sus copias
-vanilla** al soltar: una copia rancia pisaría el trabajo del dueño.
+VANILLA suspende el módulo y devuelve los campos escritos a su referencia previa cuando le corresponde. No equivale a aplicar constantes supuestamente neutras. Conserva el modo en el archivo global.
 
-## Piezas
+OPTIMIZED lee `BuiltIns/Optimized.xml`, incorporado en el ensamblado. La referencia seleccionada y diferencias están en `SceneFX/docs/Default.reference.xml` y `SceneFX/docs/VALIDACION.md`. No lee RenderIt Plus por frame ni lo integra.
 
-```
-Source/
-  LumenFXMod.cs             IUserMod + API de suite (27 etiquetas)
-  Core/
-    LightingMixer.cs        remuestrea las 4 gradientes del ciclo
-    TonemapProfile.cs       mapea brillo y contraste sobre la curva filmic
-    LightState.cs           el estado completo del mod
-    VanillaSnapshot.cs      la foto del juego sin tocar, para poder volver
-    AdaptiveExposure.cs     compensación propia de exposición día/noche
-    TunerEngine.cs          MonoBehaviour anfitrión, Ctrl+Alt+L
-    ThemeOwnership.cs       cede a Theme Mixer lo que es suyo
-  Shadows/
-    GroundProbe.cs          raycast contra la malla real para medir el suelo
-    AdaptiveBias.cs         curva de sesgo según esa medida
-    UpdateLightingPatch.cs
-  Presets/PresetLibrary.cs  recetas, incluido el importador de *.light
-  IO/StateStore.cs          persistencia con guardado diferido
-  UI/TunerWindow.cs         ventana IMGUI de 4 pestañas
+`Mode` compara la receta contra el estado exportado: al editar muestra CUSTOM. Describe la configuración, no acredita disponibilidad del LUT ni ausencia de interferencias externas. `Status` comunica errores detectados.
+
+## Contrato de incrustación
+
+Llamadas de UI y motor en el hilo principal de Unity, con servicios del nivel disponibles:
+
+```csharp
+var panel = LumenFX.FxModule.CreatePanel(parent, 320f, 650f);
+string xml = LumenFX.FxModule.ReadState();
+bool accepted = LumenFX.FxModule.ApplyState(xml);
+panel.Refresh(); // refrescar tras modificaciones externas
+panel.SetSize(320f, 700f);
+panel.Dispose(); // destruir UI no desactiva la configuración
+LumenFX.FxModule.Flush();
 ```
 
-### Las gradientes
+- `parent` es un `ColossalFramework.UI.UIComponent` del futuro host. Este conserva la referencia, visibilidad y disposición.
+- `Release()` es una acción separada: libera motor y persiste VANILLA.
+- `ApplyState` recibe la sección XML exportada del mod. Rechaza raíz ajena, texto inválido y números no finitos. No aplica parcialmente una sección con validación fallida.
+- La exportación no incluye la posición de ventana. Los campos de mundo tienen su alcance y modos explícitos.
+- `LumenFXMod.ActiveClaims` informa de campos compartidos; no bloquea físicamente escrituras del motor.
+- Tamaño preferido 360×680 y mínimo 280×260. Reapertura independiente recoloca el panel dentro de la resolución actual.
 
-`LightingMixer` remuestrea las cuatro gradientes del ciclo (directa, cielo,
-ecuador, suelo) sobre siete tiempos clave espejo de los del juego:
+Sin SDK global, RPC, plugins ni referencia a Arrebol/RenderIt Plus.
 
-```
-0.23  0.26  0.32  0.50  0.68  0.74  0.77
-```
+## Cooperación y guardado
 
-**Siete, y hay un tope explícito de ocho.** Unity no admite más de ocho claves
-de color en un `Gradient`; pasarse no da error, degenera la curva. Con nueve, la
-gradiente solar colapsaba a dos claves blancas siempre que LumenFX estuviera
-activo. El tope está ahora escrito en el código, no en la memoria de nadie.
+Lumen tiene prioridad para la luz que reclama; Atmosphere, para la niebla cuando está activo. Scene delega ediciones de look a Lumen activo y aplica localmente cuando está suspendido. Classic consulta reclamaciones antes de escribir/restaurar. La carga automática de Scene no sustituye las preferencias globales guardadas de Lumen.
 
-### El sesgo de sombras
+La coordinación cubre los FX revisados. Otros mods, el orden real de carga y cambios tardíos de tema requieren prueba dentro del juego; no se garantiza restauración universal.
 
-`GroundProbe` lanza un rayo contra la malla real del juego para saber a qué
-altura está el suelo bajo la cámara, y `AdaptiveBias` traduce esa distancia en
-un sesgo. Es lo que evita el acné de sombra sin despegarlas del terreno.
+Estado: LumenFX2.xml. Cambios agrupados durante aproximadamente un segundo, escritura temporal, reemplazo con `.bak`, pendiente hasta éxito y flush al cerrar anfitrión. Carga inválida no copia los primeros campos al estado vivo. La recuperación de `.bak` es manual; no se implementa una migración universal de formatos legados.
 
-## API de suite
+## Verificación
 
-`ApplySuiteSection` / `ExportSuiteSection`, públicas y estáticas. 27 etiquetas,
-todas las que se aplican se exportan:
+[Estado de sesión](docs/ESTADO-SESION.md) y [paridad](docs/PARIDAD.md) distinguen controles, comportamiento, formatos y aspecto.
 
-```
-sunStrength moonStrength ambience warmth
-sunTemp sunTint moonTemp moonTint skyTemp skyTint globalTint twilightTint
-skyTonemapping brightness contrast gamma
-adaptiveShadows forceLowBias biasScale softShadows
-adaptiveExposure adaptiveExposureGain
-skyRayleigh skyMie sunPower moonPower vanillaMode
-```
-
-## Dónde guarda las cosas
-
-`%LOCALAPPDATA%\Colossal Order\Cities_Skylines\LumenFX2.xml`. Ruta completa, no
-relativa, por la misma razón que el resto de la suite.
-
-## Qué cambió en este ciclo
-
-**El brillo llega hasta donde llegaba Relight.** La norma de la suite es
-conservar el rango más ancho de los mods que se sustituyen. Al brillo se le
-atribuye en Relight un techo de realce de unas 4,1 veces y aquí la curva se
-quedaba en 1,6. `TonemapProfile.BoostFor` es ahora de dos tramos:
-
-- de −1 a 1, **exactamente la fórmula de siempre**, `1 + 0,6b`, hasta 1,6.
-  Ninguna receta guardada cambia de aspecto: todas caen en ese tramo;
-- por encima de 1 la recta sigue con pendiente 0,84 hasta 4,1 en b = 4.
-
-El techo de 4,1 sale de un informe externo, no de haber leído el código de
-Relight, que no tiene licencia y no se toca. Si algún día se mide de verdad y
-sale otro número, el que cambia es el segundo tramo.
-
-**`ToggleWindow()`** — método público y estático para que otro mod de la suite
-pueda abrir este panel sin que el usuario tenga que acordarse del atajo. Guardar
-al cerrar pasa también por ahí, o cerrar desde fuera perdería lo último tocado.
-
-**Interfaz.** Cuatro pestañas con scroll propio en vez de un muro continuo, y el
-balance de color agrupado por momento del día en vez de por variable.
-
-## Correcciones de la revisión
-
-- **Sin emoji.** La fuente Arial de Unity 5.6 no lleva pictogramas. Se comprobó
-  sobre 12.960 ficheros `.cs` de mods que ya funcionan: ninguno los usa.
-- **La ventana vuelve a estar entera en inglés.** Antes del rediseño no había ni
-  un literal con acento castellano; se habían colado diez, mezclados con los
-  deslizadores en inglés que nadie tocó. Una interfaz a dos idiomas.
-- **La aislación de los deslizadores sigue en pie** (verificado): cada
-  deslizador guarda `GUI.changed`, lo pone a falso, dibuja y lo restaura. Sin
-  eso, redondear al paso reescribía la receta del usuario sin que la tocara
-  —0,00006 a 0,00005— y provocaba tirones.
-
-## Atajos
-
-- `Ctrl+Alt+L` — ventana del mod.
-
-## Licencia
-
-MIT-0 © 2026 juanamores98. Sin atribución ni condiciones.
+Las temperaturas, tintes, gamma, brillo y bias usan fórmulas propias. La importación .light conserva un significado aproximado; no es conversión visual sin pérdida. Harmony 1.2.0.1 continúa como dependencia existente: falta verificar en el conjunto real de mods del usuario que el parche se instala y convive correctamente.

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using UnityEngine;
 
 namespace LumenFX.Core
@@ -41,10 +41,13 @@ namespace LumenFX.Core
         private static FieldInfo _equatorColorField;
         private static FieldInfo _groundColorField;
         private static DayNightProperties _cachedDayNight;
+        private static bool _exposureWritten;
 
         public static void ClearCache()
         {
             _cachedDayNight = null;
+            _exposureWritten = false;
+            Runtime.TunerRuntime.CurrentState.LightingDirty = true;
         }
 
         private static void EnsureFields()
@@ -71,7 +74,19 @@ namespace LumenFX.Core
                 }
             }
 
+            VanillaSnapshot.Capture();
             _cachedDayNight.m_Tonemapping = state.SkyTonemapping;
+            if (state.SkyExposure > 0f)
+            {
+                _cachedDayNight.m_Exposure = state.SkyExposure;
+                _exposureWritten = true;
+            }
+            else if (_exposureWritten)
+            {
+                if (VanillaSnapshot.Captured && !state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged)
+                    _cachedDayNight.m_Exposure = VanillaSnapshot.CapturedExposure;
+                _exposureWritten = false;
+            }
 
             // Los cuatro ejes absolutos. Cero significa "el valor del juego o del tema del
             // mapa", y para que eso sea reversible hay que reponerlo desde lo capturado: dejar

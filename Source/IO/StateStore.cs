@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -16,35 +16,108 @@ namespace LumenFX.IO
         [XmlAttribute("schema")]
         public int Schema = 2;
 
-        [XmlElement("sunStrength")] public float SunStrength { get => Runtime.TunerRuntime.CurrentState.SunStrength; set => Runtime.TunerRuntime.CurrentState.SunStrength = Clamp(value, 0f, 2f); }
-        [XmlElement("moonStrength")] public float MoonStrength { get => Runtime.TunerRuntime.CurrentState.MoonStrength; set => Runtime.TunerRuntime.CurrentState.MoonStrength = Clamp(value, 0f, 2f); }
-        [XmlElement("ambience")] public float Ambience { get => Runtime.TunerRuntime.CurrentState.Ambience; set => Runtime.TunerRuntime.CurrentState.Ambience = Clamp(value, 0f, 2f); }
-        [XmlElement("warmth")] public float Warmth { get => Runtime.TunerRuntime.CurrentState.Warmth; set => Runtime.TunerRuntime.CurrentState.Warmth = Clamp(value, -1f, 1f); }
-        [XmlElement("sunTemp")] public float SunTemp { get => Runtime.TunerRuntime.CurrentState.SunTemp; set => Runtime.TunerRuntime.CurrentState.SunTemp = Clamp(value, -1f, 1f); }
-        [XmlElement("sunTint")] public float SunTint { get => Runtime.TunerRuntime.CurrentState.SunTint; set => Runtime.TunerRuntime.CurrentState.SunTint = Clamp(value, -1f, 1f); }
-        [XmlElement("moonTemp")] public float MoonTemp { get => Runtime.TunerRuntime.CurrentState.MoonTemp; set => Runtime.TunerRuntime.CurrentState.MoonTemp = Clamp(value, -1f, 1f); }
-        [XmlElement("moonTint")] public float MoonTint { get => Runtime.TunerRuntime.CurrentState.MoonTint; set => Runtime.TunerRuntime.CurrentState.MoonTint = Clamp(value, -1f, 1f); }
-        [XmlElement("skyTemp")] public float SkyTemp { get => Runtime.TunerRuntime.CurrentState.SkyTemp; set => Runtime.TunerRuntime.CurrentState.SkyTemp = Clamp(value, -1f, 1f); }
-        [XmlElement("skyTint")] public float SkyTint { get => Runtime.TunerRuntime.CurrentState.SkyTint; set => Runtime.TunerRuntime.CurrentState.SkyTint = Clamp(value, -1f, 1f); }
-        [XmlElement("globalTint")] public float GlobalTint { get => Runtime.TunerRuntime.CurrentState.GlobalTint; set => Runtime.TunerRuntime.CurrentState.GlobalTint = Clamp(value, -1f, 1f); }
-        [XmlElement("twilightTint")] public float TwilightTint { get => Runtime.TunerRuntime.CurrentState.TwilightTint; set => Runtime.TunerRuntime.CurrentState.TwilightTint = Clamp(value, -1f, 1f); }
-        [XmlElement("skyTonemapping")] public bool SkyTonemapping { get => Runtime.TunerRuntime.CurrentState.SkyTonemapping; set => Runtime.TunerRuntime.CurrentState.SkyTonemapping = value; }
-        [XmlElement("brightness")] public float Brightness { get => Runtime.TunerRuntime.CurrentState.Brightness; set => Runtime.TunerRuntime.CurrentState.Brightness = Clamp(value, -1f, 4f); }
-        [XmlElement("contrast")] public float Contrast { get => Runtime.TunerRuntime.CurrentState.Contrast; set => Runtime.TunerRuntime.CurrentState.Contrast = Clamp(value, -1f, 1f); }
-        [XmlElement("gamma")] public float Gamma { get => Runtime.TunerRuntime.CurrentState.Gamma; set => Runtime.TunerRuntime.CurrentState.Gamma = Clamp(value, 1.5f, 3.5f); }
-        [XmlElement("adaptiveShadows")] public bool AdaptiveShadows { get => Runtime.TunerRuntime.CurrentState.AdaptiveShadows; set => Runtime.TunerRuntime.CurrentState.AdaptiveShadows = value; }
-        [XmlElement("forceLowBias")] public bool ForceLowBias { get => Runtime.TunerRuntime.CurrentState.ForceLowBias; set => Runtime.TunerRuntime.CurrentState.ForceLowBias = value; }
-        [XmlElement("biasScale")] public float BiasScale { get => Runtime.TunerRuntime.CurrentState.BiasScale; set => Runtime.TunerRuntime.CurrentState.BiasScale = Clamp(value, 0f, 2f); }
-        [XmlElement("softShadows")] public bool SoftShadows { get => Runtime.TunerRuntime.CurrentState.SoftShadows; set => Runtime.TunerRuntime.CurrentState.SoftShadows = value; }
-        [XmlElement("adaptiveExposure")] public bool AdaptiveExposure { get => Runtime.TunerRuntime.CurrentState.AdaptiveExposure; set => Runtime.TunerRuntime.CurrentState.AdaptiveExposure = value; }
-        [XmlElement("adaptiveExposureGain")] public float AdaptiveExposureGain { get => Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain; set => Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain = Clamp(value, 0f, 1f); }
-        [XmlElement("windowX")] public float WindowX { get => Runtime.TunerRuntime.CurrentState.WindowX; set => Runtime.TunerRuntime.CurrentState.WindowX = value; }
-        [XmlElement("windowY")] public float WindowY { get => Runtime.TunerRuntime.CurrentState.WindowY; set => Runtime.TunerRuntime.CurrentState.WindowY = value; }
-        [XmlElement("vanillaMode")] public bool VanillaMode { get => Runtime.TunerRuntime.CurrentState.VanillaMode; set => Runtime.TunerRuntime.CurrentState.VanillaMode = value; }
+        private float _SunStrength = Runtime.TunerRuntime.CurrentState.SunStrength;
+        [XmlElement("sunStrength")] public float SunStrength { get => _SunStrength; set => _SunStrength = Clamp(value, 0f, 3f); }
+        private float _MoonStrength = Runtime.TunerRuntime.CurrentState.MoonStrength;
+        [XmlElement("moonStrength")] public float MoonStrength { get => _MoonStrength; set => _MoonStrength = Clamp(value, 0f, 2f); }
+        private float _Ambience = Runtime.TunerRuntime.CurrentState.Ambience;
+        [XmlElement("ambience")] public float Ambience { get => _Ambience; set => _Ambience = Clamp(value, 0f, 2f); }
+        private float _Warmth = Runtime.TunerRuntime.CurrentState.Warmth;
+        [XmlElement("warmth")] public float Warmth { get => _Warmth; set => _Warmth = Clamp(value, -1f, 1f); }
+        private float _SunTemp = Runtime.TunerRuntime.CurrentState.SunTemp;
+        [XmlElement("sunTemp")] public float SunTemp { get => _SunTemp; set => _SunTemp = Clamp(value, -1f, 1f); }
+        private float _SunTint = Runtime.TunerRuntime.CurrentState.SunTint;
+        [XmlElement("sunTint")] public float SunTint { get => _SunTint; set => _SunTint = Clamp(value, -1f, 1f); }
+        private float _MoonTemp = Runtime.TunerRuntime.CurrentState.MoonTemp;
+        [XmlElement("moonTemp")] public float MoonTemp { get => _MoonTemp; set => _MoonTemp = Clamp(value, -1f, 1f); }
+        private float _MoonTint = Runtime.TunerRuntime.CurrentState.MoonTint;
+        [XmlElement("moonTint")] public float MoonTint { get => _MoonTint; set => _MoonTint = Clamp(value, -1f, 1f); }
+        private float _SkyTemp = Runtime.TunerRuntime.CurrentState.SkyTemp;
+        [XmlElement("skyTemp")] public float SkyTemp { get => _SkyTemp; set => _SkyTemp = Clamp(value, -1f, 1f); }
+        private float _SkyTint = Runtime.TunerRuntime.CurrentState.SkyTint;
+        [XmlElement("skyTint")] public float SkyTint { get => _SkyTint; set => _SkyTint = Clamp(value, -1f, 1f); }
+        private float _GlobalTint = Runtime.TunerRuntime.CurrentState.GlobalTint;
+        [XmlElement("globalTint")] public float GlobalTint { get => _GlobalTint; set => _GlobalTint = Clamp(value, -1f, 1f); }
+        private float _TwilightTint = Runtime.TunerRuntime.CurrentState.TwilightTint;
+        [XmlElement("twilightTint")] public float TwilightTint { get => _TwilightTint; set => _TwilightTint = Clamp(value, -1f, 1f); }
+        private bool _SkyTonemapping = Runtime.TunerRuntime.CurrentState.SkyTonemapping;
+        [XmlElement("skyTonemapping")] public bool SkyTonemapping { get => _SkyTonemapping; set => _SkyTonemapping = value; }
+        private float _Brightness = Runtime.TunerRuntime.CurrentState.Brightness;
+        [XmlElement("brightness")] public float Brightness { get => _Brightness; set => _Brightness = Clamp(value, -1f, 4f); }
+        private float _Contrast = Runtime.TunerRuntime.CurrentState.Contrast;
+        [XmlElement("contrast")] public float Contrast { get => _Contrast; set => _Contrast = Clamp(value, -1f, 1f); }
+        private float _Gamma = Runtime.TunerRuntime.CurrentState.Gamma;
+        [XmlElement("gamma")] public float Gamma { get => _Gamma; set => _Gamma = Clamp(value, 1.5f, 3.5f); }
+        private bool _AdaptiveShadows = Runtime.TunerRuntime.CurrentState.AdaptiveShadows;
+        [XmlElement("adaptiveShadows")] public bool AdaptiveShadows { get => _AdaptiveShadows; set => _AdaptiveShadows = value; }
+        private bool _ForceLowBias = Runtime.TunerRuntime.CurrentState.ForceLowBias;
+        [XmlElement("forceLowBias")] public bool ForceLowBias { get => _ForceLowBias; set => _ForceLowBias = value; }
+        private float _BiasScale = Runtime.TunerRuntime.CurrentState.BiasScale;
+        [XmlElement("biasScale")] public float BiasScale { get => _BiasScale; set => _BiasScale = Clamp(value, 0f, 2f); }
+        private bool _SoftShadows = Runtime.TunerRuntime.CurrentState.SoftShadows;
+        [XmlElement("softShadows")] public bool SoftShadows { get => _SoftShadows; set => _SoftShadows = value; }
+        private bool _AdaptiveExposure = Runtime.TunerRuntime.CurrentState.AdaptiveExposure;
+        [XmlElement("adaptiveExposure")] public bool AdaptiveExposure { get => _AdaptiveExposure; set => _AdaptiveExposure = value; }
+        private float _AdaptiveExposureGain = Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain;
+        [XmlElement("adaptiveExposureGain")] public float AdaptiveExposureGain { get => _AdaptiveExposureGain; set => _AdaptiveExposureGain = Clamp(value, 0f, 1f); }
+        private float _WindowX = Runtime.TunerRuntime.CurrentState.WindowX;
+        [XmlElement("windowX")] public float WindowX { get => _WindowX; set => _WindowX = Infrastructure.FxStorage.Clamp(value, -100000f, 100000f); }
+        private float _WindowY = Runtime.TunerRuntime.CurrentState.WindowY;
+        [XmlElement("windowY")] public float WindowY { get => _WindowY; set => _WindowY = Infrastructure.FxStorage.Clamp(value, -100000f, 100000f); }
+        private bool _VanillaMode = Runtime.TunerRuntime.CurrentState.VanillaMode;
+        [XmlElement("vanillaMode")] public bool VanillaMode { get => _VanillaMode; set => _VanillaMode = value; }
+
+        private float _SunPower = Runtime.TunerRuntime.CurrentState.SunPower;
+        [XmlElement("sunPower")] public float SunPower { get => _SunPower; set => _SunPower = Clamp(value, 0f, 20f); }
+        private float _MoonPower = Runtime.TunerRuntime.CurrentState.MoonPower;
+        [XmlElement("moonPower")] public float MoonPower { get => _MoonPower; set => _MoonPower = Clamp(value, 0f, 20f); }
+        private float _SkyRayleigh = Runtime.TunerRuntime.CurrentState.SkyRayleigh;
+        [XmlElement("skyRayleigh")] public float SkyRayleigh { get => _SkyRayleigh; set => _SkyRayleigh = Clamp(value, 0f, 5f); }
+        private float _SkyMie = Runtime.TunerRuntime.CurrentState.SkyMie;
+        [XmlElement("skyMie")] public float SkyMie { get => _SkyMie; set => _SkyMie = Clamp(value, 0f, 5f); }
+
+
+        private float _SkyExposure = Runtime.TunerRuntime.CurrentState.SkyExposure;
+        [XmlElement("skyExposure")] public float SkyExposure { get => _SkyExposure; set => _SkyExposure = Clamp(value, 0f, 5f); }
+
+        internal void Apply()
+        {
+            Runtime.TunerRuntime.CurrentState.SunStrength = SunStrength;
+            Runtime.TunerRuntime.CurrentState.MoonStrength = MoonStrength;
+            Runtime.TunerRuntime.CurrentState.Ambience = Ambience;
+            Runtime.TunerRuntime.CurrentState.Warmth = Warmth;
+            Runtime.TunerRuntime.CurrentState.SunTemp = SunTemp;
+            Runtime.TunerRuntime.CurrentState.SunTint = SunTint;
+            Runtime.TunerRuntime.CurrentState.MoonTemp = MoonTemp;
+            Runtime.TunerRuntime.CurrentState.MoonTint = MoonTint;
+            Runtime.TunerRuntime.CurrentState.SkyTemp = SkyTemp;
+            Runtime.TunerRuntime.CurrentState.SkyTint = SkyTint;
+            Runtime.TunerRuntime.CurrentState.GlobalTint = GlobalTint;
+            Runtime.TunerRuntime.CurrentState.TwilightTint = TwilightTint;
+            Runtime.TunerRuntime.CurrentState.SkyTonemapping = SkyTonemapping;
+            Runtime.TunerRuntime.CurrentState.Brightness = Brightness;
+            Runtime.TunerRuntime.CurrentState.Contrast = Contrast;
+            Runtime.TunerRuntime.CurrentState.Gamma = Gamma;
+            Runtime.TunerRuntime.CurrentState.AdaptiveShadows = AdaptiveShadows;
+            Runtime.TunerRuntime.CurrentState.ForceLowBias = ForceLowBias;
+            Runtime.TunerRuntime.CurrentState.BiasScale = BiasScale;
+            Runtime.TunerRuntime.CurrentState.SoftShadows = SoftShadows;
+            Runtime.TunerRuntime.CurrentState.AdaptiveExposure = AdaptiveExposure;
+            Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain = AdaptiveExposureGain;
+            Runtime.TunerRuntime.CurrentState.WindowX = WindowX;
+            Runtime.TunerRuntime.CurrentState.WindowY = WindowY;
+            Runtime.TunerRuntime.CurrentState.VanillaMode = VanillaMode;
+            Runtime.TunerRuntime.CurrentState.SunPower = SunPower;
+            Runtime.TunerRuntime.CurrentState.MoonPower = MoonPower;
+            Runtime.TunerRuntime.CurrentState.SkyRayleigh = SkyRayleigh;
+            Runtime.TunerRuntime.CurrentState.SkyMie = SkyMie;
+            Runtime.TunerRuntime.CurrentState.SkyExposure = SkyExposure;
+            Runtime.TunerRuntime.CurrentState.LightingDirty = true;
+        }
 
         private static float Clamp(float v, float min, float max)
         {
-            return v < min ? min : (v > max ? max : v);
+            return Infrastructure.FxStorage.Clamp(v, min, max);
         }
     }
 
@@ -67,7 +140,7 @@ namespace LumenFX.IO
 
                 using (var reader = new StreamReader(FilePath))
                 {
-                    new XmlSerializer(typeof(StateDocument)).Deserialize(reader);
+                    ((StateDocument)new XmlSerializer(typeof(StateDocument)).Deserialize(reader)).Apply();
                 }
             }
             catch (Exception e)
@@ -96,14 +169,12 @@ namespace LumenFX.IO
 
         internal static void SaveImmediate()
         {
-            _dirty = false;
+            _dirty = true;
             _lastSaveTime = Time.realtimeSinceStartup;
             try
             {
-                using (var writer = new StreamWriter(FilePath))
-                {
-                    new XmlSerializer(typeof(StateDocument)).Serialize(writer, new StateDocument());
-                }
+                Infrastructure.FxStorage.WriteXml(FilePath, new StateDocument());
+                _dirty = false;
             }
             catch (Exception e)
             {
