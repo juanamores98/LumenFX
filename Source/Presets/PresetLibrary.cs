@@ -17,6 +17,10 @@ namespace LumenFX.Presets
         [XmlAttribute("name")]
         public string Name = "Untitled";
 
+        [XmlElement("toneEnabled")] public int ToneEnabled = -1;
+        [XmlElement("legacySceneLighting")] public bool LegacySceneLighting;
+        [XmlElement("legacySceneSunMultiplier")] public float LegacySceneSunMultiplier = 1f;
+        [XmlElement("legacySceneWarmth")] public float LegacySceneWarmth;
         [XmlElement("sunStrength")] public float SunStrength = 1f;
         [XmlElement("moonStrength")] public float MoonStrength = 1f;
         [XmlElement("ambience")] public float Ambience = 1f;
@@ -89,6 +93,10 @@ namespace LumenFX.Presets
             return new PresetDocument
             {
                 Name = Sanitize(name),
+                ToneEnabled = state.ToneEnabled,
+                LegacySceneLighting = state.LegacySceneLighting,
+                LegacySceneSunMultiplier = state.LegacySceneSunMultiplier,
+                LegacySceneWarmth = state.LegacySceneWarmth,
                 SunStrength = state.SunStrength,
                 MoonStrength = state.MoonStrength,
                 Ambience = state.Ambience,
@@ -124,6 +132,10 @@ namespace LumenFX.Presets
         {
             var pending = new IO.StateDocument
             {
+                ToneEnabled = preset.ToneEnabled,
+                LegacySceneLighting = preset.LegacySceneLighting,
+                LegacySceneSunMultiplier = preset.LegacySceneSunMultiplier,
+                LegacySceneWarmth = preset.LegacySceneWarmth,
                 SunStrength = preset.SunStrength,
                 MoonStrength = preset.MoonStrength,
                 Ambience = preset.Ambience,
@@ -153,9 +165,11 @@ namespace LumenFX.Presets
                 SkyMie = preset.SkyMie,
                 VanillaMode = preset.VanillaMode,
             };
-            pending.Apply();
-            Runtime.TunerRuntime.ApplyAll();
-            IO.StateStore.Save();
+            using (var writer = new StringWriter(CultureInfo.InvariantCulture))
+            {
+                new XmlSerializer(typeof(IO.StateDocument)).Serialize(writer, pending);
+                if (!LumenFXMod.ApplySuiteSection(writer.ToString())) throw new InvalidOperationException(LumenFXMod.LastApplyError);
+            }
         }
 
         internal static bool Exists(string name)
