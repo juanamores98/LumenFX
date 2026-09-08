@@ -17,7 +17,7 @@ namespace LumenFX
         public static void Release() { if (!Presets.QuickPresets.ApplyVanilla()) throw new InvalidOperationException("VANILLA could not be applied."); Flush(); }
         public static void ApplyOptimized() { if (!Presets.QuickPresets.ApplyOptimized()) throw new InvalidOperationException(LumenFXMod.LastApplyError ?? "Default could not be applied."); Flush(); }
         public static void Flush() { IO.StateStore.SaveImmediate(); }
-        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : Mode; } }
+        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : Mode; } }
 
         public static PanelView CreatePanel(UIComponent parent, float width = PreferredWidth, float height = 680f)
         {
