@@ -12,17 +12,17 @@ namespace LumenFX
         public const float PreferredWidth = 380f;
         public const float PreferredHeight = 540f;
         private static PanelView _standalone;
-        public static string Mode { get { return Runtime.TunerRuntime.CurrentState.VanillaMode ? "GAME" : (Infrastructure.FxStorage.MatchesOptimized(ReadState(), typeof(LumenFXMod)) ? "DEFAULT v3" : "CUSTOM"); } }
+        public static string Mode { get { return Runtime.TunerRuntime.CurrentState.VanillaMode ? "VANILLA" : (Infrastructure.FxStorage.MatchesOptimized(ReadState(), typeof(LumenFXMod)) ? "OPTIMIZED" : "CUSTOM"); } }
         public static string ReadState() { return LumenFXMod.ExportSuiteSection(); }
         public static bool ApplyState(string xml) { return LumenFXMod.ApplySuiteSection(xml); }
         public static void Release() { if (!Presets.QuickPresets.ApplyVanilla()) throw new InvalidOperationException("VANILLA could not be applied."); Flush(); }
         public static void ApplyOptimized() { if (!Presets.QuickPresets.ApplyOptimized()) throw new InvalidOperationException(LumenFXMod.LastApplyError ?? "Default could not be applied."); Flush(); }
         public static void Flush() { IO.StateStore.SaveImmediate(); }
-        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : Mode; } }
+        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : "Config: " + UiText.Get(Mode); } }
 
         public static PanelView CreatePanel(UIComponent parent, float width = PreferredWidth, float height = PreferredHeight)
         {
-            var view = new PanelView("LumenFX", parent, width, height, Release, ApplyOptimized, () => Status);
+            var view = new PanelView("LumenFX", parent, width, height, Release, ApplyOptimized, () => Status, () => Mode);
             var page0 = view.AddPage("Light");
             view.Number(page0, "Sun power (0 = map)", () => Runtime.TunerRuntime.CurrentState.SunPower, v => Edit(() => Runtime.TunerRuntime.CurrentState.SunPower = v), 0f, 20f, 0.01f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunStrength") && !Runtime.TunerRuntime.CurrentState.LegacySceneLighting);
             view.Number(page0, "Moon power (0 = map)", () => Runtime.TunerRuntime.CurrentState.MoonPower, v => Edit(() => Runtime.TunerRuntime.CurrentState.MoonPower = v), 0f, 20f, 0.01f);
@@ -33,6 +33,8 @@ namespace LumenFX
             view.Number(page0, "Mie (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyMie, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyMie = v), 0f, 5f, 0.001f);
             view.Number(page0, "Sky exposure (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyExposure, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyExposure = v), 0f, 5f, 0.001f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunStrength"));
             view.Check(page0, "Sky tonemapping", () => Runtime.TunerRuntime.CurrentState.SkyTonemapping, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyTonemapping = v));
+            view.Check(page0, "Apply settings when a city loads", () => Runtime.TunerRuntime.CurrentState.ApplyOnLoad, v => { Runtime.TunerRuntime.CurrentState.ApplyOnLoad = v; IO.StateStore.SaveImmediate(); });
+            view.Info(page0, () => LumenFXMod.ApplicationStatus ?? "Settings ready; appearance not yet verified in game");
             var page1 = view.AddPage("Color");
             view.Check(page1, "Use imported Scene lighting model", () => Runtime.TunerRuntime.CurrentState.LegacySceneLighting, v => Edit(() => Runtime.TunerRuntime.CurrentState.LegacySceneLighting = v));
             view.Info(page1, () => Runtime.TunerRuntime.CurrentState.LegacySceneLighting ? "Imported Scene multiplier and warmth are active. Disable to use native Lumen colour controls." : "Native Lumen lighting model");
@@ -56,18 +58,6 @@ namespace LumenFX
             view.Number(page2, "Shadow bias scale", () => Runtime.TunerRuntime.CurrentState.BiasScale, v => Edit(() => Runtime.TunerRuntime.CurrentState.BiasScale = v), 0f, 2f, 0.01f, enabled: () => Runtime.TunerRuntime.CurrentState.AdaptiveShadows);
             view.Check(page2, "Adaptive exposure", () => Runtime.TunerRuntime.CurrentState.AdaptiveExposure, v => Edit(() => Runtime.TunerRuntime.CurrentState.AdaptiveExposure = v));
             view.Number(page2, "Adaptive exposure gain", () => Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain, v => Edit(() => Runtime.TunerRuntime.CurrentState.AdaptiveExposureGain = v), 0f, 1f, 0.01f, enabled: () => Runtime.TunerRuntime.CurrentState.AdaptiveExposure);
-            var presets = view.AddPage("Presets");
-            var items = Presets.PresetLibrary.LoadAll();
-            int selected = 0;
-            string name = "My look";
-            view.Choice(presets, "Saved preset", () => items.Count == 0 ? new[] { "No saved presets" } : items.ConvertAll(p => p.Name).ToArray(), () => selected, v => selected = v);
-            view.Action(presets, "Apply selected preset", () => { if (selected >= 0 && selected < items.Count) Presets.PresetLibrary.Apply(items[selected]); });
-            view.Text(presets, "Name", () => name, v => name = v);
-            view.Action(presets, "Save preset", () => { Presets.PresetLibrary.Save(Presets.PresetLibrary.Capture(name)); items = Presets.PresetLibrary.LoadAll(); });
-            view.Action(presets, "Refresh list", () => items = Presets.PresetLibrary.LoadAll());
-            view.Action(presets, "Import installed .light presets", () => { Presets.PresetLibrary.ImportLegacyRelightPresets(); items = Presets.PresetLibrary.LoadAll(); });
-            view.Check(presets, "Apply settings when a city loads", () => Runtime.TunerRuntime.CurrentState.ApplyOnLoad, v => { Runtime.TunerRuntime.CurrentState.ApplyOnLoad = v; IO.StateStore.SaveImmediate(); });
-            view.Info(presets, () => LumenFXMod.ApplicationStatus ?? "Settings ready; appearance not yet verified in game");
             view.Refresh();
             return view;
         }
