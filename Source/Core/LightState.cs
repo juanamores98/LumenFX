@@ -44,6 +44,7 @@ namespace LumenFX.Core
         public float WindowX = 620f;
         public float WindowY = 300f;
         public bool VanillaMode = true;            // suspend everything, game untouched
+        public bool ApplyOnLoad = true;
 
         public bool LightingDirty = true;
 

@@ -113,8 +113,21 @@ namespace LumenFX
         {
             base.OnLevelLoaded(mode);
 
+            IO.StateStore.Load();
             CreateHost();
-            TunerRuntime.ApplyAll();
+
+            var state = TunerRuntime.CurrentState;
+            if (state != null)
+            {
+                if (state.VanillaMode)
+                {
+                    TunerRuntime.RestoreVanilla();
+                }
+                else if (state.ApplyOnLoad)
+                {
+                    TunerRuntime.ApplyAll();
+                }
+            }
 
             UI.UuiButton.Register(
                 "LumenFX v2",
@@ -127,6 +140,8 @@ namespace LumenFX
         {
             base.OnLevelUnloading();
             UI.UuiButton.Unregister();
+            IO.StateStore.SaveImmediate();
+            Infrastructure.PropertyLedger.Forget("LumenFX");
             DestroyHosts();
         }
 
@@ -167,6 +182,11 @@ namespace LumenFX
             group.AddButton("VANILLA", FxModule.Release);
             group.AddButton("OPTIMIZED / Default", FxModule.ApplyOptimized);
             group.AddButton("Open compact panel", () => FxModule.OpenStandalone());
+            group.AddCheckbox("Apply saved settings when a city loads", TunerRuntime.CurrentState.ApplyOnLoad, value =>
+            {
+                TunerRuntime.CurrentState.ApplyOnLoad = value;
+                IO.StateStore.SaveImmediate();
+            });
         }
 
         private void CreateHost()
@@ -322,6 +342,7 @@ namespace LumenFX
                     // El modo vanilla decide si el mod escribe o no, y no se podia expresar en
                     // un perfil de suite: un perfil no tenia forma de encenderlo ni apagarlo.
                     else if (name == "vanillamode") state.VanillaMode = bool.Parse(val);
+                    else if (name == "applyonload") state.ApplyOnLoad = bool.Parse(val);
                 }
 
                 if (state.ToneEnabled < -1 || state.ToneEnabled > 1) throw new System.ArgumentException("Invalid camera tone mode.");

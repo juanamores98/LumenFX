@@ -66,6 +66,7 @@ namespace LumenFX
             view.Action(presets, "Save preset", () => { Presets.PresetLibrary.Save(Presets.PresetLibrary.Capture(name)); items = Presets.PresetLibrary.LoadAll(); });
             view.Action(presets, "Refresh list", () => items = Presets.PresetLibrary.LoadAll());
             view.Action(presets, "Import installed .light presets", () => { Presets.PresetLibrary.ImportLegacyRelightPresets(); items = Presets.PresetLibrary.LoadAll(); });
+            view.Check(presets, "Apply settings when a city loads", () => Runtime.TunerRuntime.CurrentState.ApplyOnLoad, v => { Runtime.TunerRuntime.CurrentState.ApplyOnLoad = v; IO.StateStore.SaveImmediate(); });
             view.Info(presets, () => LumenFXMod.ApplicationStatus ?? "Settings ready; appearance not yet verified in game");
             view.Refresh();
             return view;

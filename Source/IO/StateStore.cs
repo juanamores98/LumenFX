@@ -71,6 +71,8 @@ namespace LumenFX.IO
         [XmlElement("windowY")] public float WindowY { get => _WindowY; set => _WindowY = Infrastructure.FxStorage.Clamp(value, -100000f, 100000f); }
         private bool _VanillaMode = Runtime.TunerRuntime.CurrentState.VanillaMode;
         [XmlElement("vanillaMode")] public bool VanillaMode { get => _VanillaMode; set => _VanillaMode = value; }
+        private bool _ApplyOnLoad = Runtime.TunerRuntime.CurrentState.ApplyOnLoad;
+        [XmlElement("applyOnLoad")] public bool ApplyOnLoad { get => _ApplyOnLoad; set => _ApplyOnLoad = value; }
 
         private float _SunPower = Runtime.TunerRuntime.CurrentState.SunPower;
         [XmlElement("sunPower")] public float SunPower { get => _SunPower; set => _SunPower = Clamp(value, 0f, 20f); }
@@ -117,6 +119,7 @@ namespace LumenFX.IO
             Runtime.TunerRuntime.CurrentState.WindowX = WindowX;
             Runtime.TunerRuntime.CurrentState.WindowY = WindowY;
             Runtime.TunerRuntime.CurrentState.VanillaMode = VanillaMode;
+            Runtime.TunerRuntime.CurrentState.ApplyOnLoad = ApplyOnLoad;
             Runtime.TunerRuntime.CurrentState.SunPower = SunPower;
             Runtime.TunerRuntime.CurrentState.MoonPower = MoonPower;
             Runtime.TunerRuntime.CurrentState.SkyRayleigh = SkyRayleigh;
