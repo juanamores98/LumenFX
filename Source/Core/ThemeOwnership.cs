@@ -45,7 +45,7 @@ namespace LumenFX.Core
 
                 if (_present)
                 {
-                    Debug.Log("[LumenFX] Theme Mixer administra la atmósfera: se ceden Rayleigh, Mie y la exposición adaptativa.");
+                    Debug.Log("[LumenFX] Theme Mixer administra la atmósfera: se cede la exposición adaptativa. Rayleigh y Mie se siguen escribiendo si los pides.");
                 }
 
                 return _present;
