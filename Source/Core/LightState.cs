@@ -1,4 +1,4 @@
-namespace LumenFX.Core
+﻿namespace LumenFX.Core
 {
     /// <summary>
     /// v2 tuning state. Parameter names, ranges and defaults are owned by
@@ -39,6 +39,13 @@ namespace LumenFX.Core
         public float SkyExposure;          // 0 = captured map exposure
         public float SkyRayleigh;           // absolute m_RayleighScattering, 0 = keep the map theme value
         public float SkyMie;                // absolute m_MieScattering, 0 = keep the map theme value
+
+        // Longitudes de onda del cielo, por canal. 0 = el valor del mapa.
+        // Es la cuarta forma de gobernar el color del cielo, junto al sesgo relativo
+        // (SkyTemp/SkyTint), el color absoluto de un tema y el degradado clasico.
+        public float SkyWaveR;
+        public float SkyWaveG;
+        public float SkyWaveB;
         public float SunPower;              // absolute m_SunIntensity, 0 = keep game value
         public float MoonPower;             // absolute m_MoonIntensity, 0 = keep game value
         public float WindowX = 620f;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using ColossalFramework.UI;
 using UnityEngine;
@@ -31,6 +31,9 @@ namespace LumenFX
             view.Number(page0, "Ambient gain", () => Runtime.TunerRuntime.CurrentState.Ambience, v => Edit(() => Runtime.TunerRuntime.CurrentState.Ambience = v), 0f, 2f, 0.01f);
             view.Number(page0, "Rayleigh (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyRayleigh, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyRayleigh = v), 0f, 5f, 0.001f);
             view.Number(page0, "Mie (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyMie, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyMie = v), 0f, 5f, 0.001f);
+            view.Number(page0, "Sky red wavelength (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyWaveR, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyWaveR = v), 0f, 1000f, 1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("fogTint"));
+            view.Number(page0, "Sky green wavelength (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyWaveG, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyWaveG = v), 0f, 1000f, 1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("fogTint"));
+            view.Number(page0, "Sky blue wavelength (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyWaveB, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyWaveB = v), 0f, 1000f, 1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("fogTint"));
             view.Number(page0, "Sky exposure (0 = map)", () => Runtime.TunerRuntime.CurrentState.SkyExposure, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyExposure = v), 0f, 5f, 0.001f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunStrength"));
             view.Check(page0, "Sky tonemapping", () => Runtime.TunerRuntime.CurrentState.SkyTonemapping, v => Edit(() => Runtime.TunerRuntime.CurrentState.SkyTonemapping = v));
             view.Check(page0, "Apply settings when a city loads", () => Runtime.TunerRuntime.CurrentState.ApplyOnLoad, v => { Runtime.TunerRuntime.CurrentState.ApplyOnLoad = v; IO.StateStore.SaveImmediate(); });

@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using ICities;
 using UnityEngine;
 using Harmony;
@@ -91,6 +91,12 @@ namespace LumenFX
                 if (state.SkyRayleigh > 0f || state.SkyMie > 0f)
                 {
                     claims += ",sky";
+                }
+
+                if (!Infrastructure.FxInterop.ClassicRequest("fogTint")
+                    && (state.SkyWaveR > 0f || state.SkyWaveG > 0f || state.SkyWaveB > 0f))
+                {
+                    claims += ",waveLengths";
                 }
 
                 return claims;
@@ -337,6 +343,9 @@ namespace LumenFX
                     else if (name == "skyexposure") state.SkyExposure = float.Parse(val, ci);
                     else if (name == "skyrayleigh") state.SkyRayleigh = float.Parse(val, ci);
                     else if (name == "skymie") state.SkyMie = float.Parse(val, ci);
+                    else if (name == "skywaver") state.SkyWaveR = float.Parse(val, ci);
+                    else if (name == "skywaveg") state.SkyWaveG = float.Parse(val, ci);
+                    else if (name == "skywaveb") state.SkyWaveB = float.Parse(val, ci);
                     else if (name == "sunpower") state.SunPower = float.Parse(val, ci);
                     else if (name == "moonpower") state.MoonPower = float.Parse(val, ci);
                     // El modo vanilla decide si el mod escribe o no, y no se podia expresar en

@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using UnityEngine;
 
 namespace LumenFX.Core
@@ -81,6 +81,7 @@ namespace LumenFX.Core
             if (classicPower || !state.AdaptiveExposure) Absolute("m_Exposure", classicPower ? 1f : state.SkyExposure);
             Absolute("m_RayleighScattering", state.SkyRayleigh);
             Absolute("m_MieScattering", state.SkyMie);
+            WaveLengths(state);
             if (!classicPower && state.LegacySceneLighting)
                 Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_SunIntensity", Infrastructure.PropertyLedger.Baseline<float>(_cachedDayNight, "m_SunIntensity") * state.LegacySceneSunMultiplier);
             else Absolute("m_SunIntensity", classicPower ? 3.318695f : state.SunPower);
@@ -149,6 +150,37 @@ namespace LumenFX.Core
                 keys[i] = new GradientColorKey(Color.Lerp(keys[i].color, Color.white, daylight * 0.35f), keys[i].time);
             }
             return new Gradient { colorKeys = keys, alphaKeys = source.alphaKeys };
+        }
+
+        /// <summary>
+        /// Las longitudes de onda del cielo, canal a canal.
+        /// </summary>
+        /// <remarks>
+        /// Cada canal en 0 significa «el del mapa», asi que se puede tocar solo el rojo y
+        /// dejar los otros dos como estaban. Es la forma en que Render It! gobierna el color
+        /// del cielo, y la unica de las cuatro que la suite no ofrecia.
+        ///
+        /// Con el tinte clasico pedido no se toca el campo: ese modo es un degradado sobre la
+        /// hora que no admite otra forma, y quien lo pide manda.
+        /// </remarks>
+        private static void WaveLengths(LightState state)
+        {
+            if (Infrastructure.FxInterop.ClassicRequest("fogTint"))
+            {
+                return;
+            }
+
+            if (state.SkyWaveR <= 0f && state.SkyWaveG <= 0f && state.SkyWaveB <= 0f)
+            {
+                Infrastructure.PropertyLedger.Release(_cachedDayNight, "m_WaveLengths");
+                return;
+            }
+
+            Vector3 map = Infrastructure.PropertyLedger.Baseline<Vector3>(_cachedDayNight, "m_WaveLengths");
+            Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_WaveLengths", new Vector3(
+                state.SkyWaveR > 0f ? state.SkyWaveR : map.x,
+                state.SkyWaveG > 0f ? state.SkyWaveG : map.y,
+                state.SkyWaveB > 0f ? state.SkyWaveB : map.z));
         }
 
         private static void Absolute(string field, float value)

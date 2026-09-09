@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -48,6 +48,9 @@ namespace LumenFX.Presets
         [XmlElement("skyExposure")] public float SkyExposure;
         [XmlElement("skyRayleigh")] public float SkyRayleigh;
         [XmlElement("skyMie")] public float SkyMie;
+        [XmlElement("skyWaveR")] public float SkyWaveR;
+        [XmlElement("skyWaveG")] public float SkyWaveG;
+        [XmlElement("skyWaveB")] public float SkyWaveB;
         [XmlElement("vanillaMode")] public bool VanillaMode;
 
     }
@@ -124,6 +127,9 @@ namespace LumenFX.Presets
                 SkyExposure = state.SkyExposure,
                 SkyRayleigh = state.SkyRayleigh,
                 SkyMie = state.SkyMie,
+                SkyWaveR = state.SkyWaveR,
+                SkyWaveG = state.SkyWaveG,
+                SkyWaveB = state.SkyWaveB,
                 VanillaMode = state.VanillaMode,
             };
         }
@@ -163,6 +169,9 @@ namespace LumenFX.Presets
                 SkyExposure = preset.SkyExposure,
                 SkyRayleigh = preset.SkyRayleigh,
                 SkyMie = preset.SkyMie,
+                SkyWaveR = preset.SkyWaveR,
+                SkyWaveG = preset.SkyWaveG,
+                SkyWaveB = preset.SkyWaveB,
                 VanillaMode = preset.VanillaMode,
             };
             using (var writer = new StringWriter(CultureInfo.InvariantCulture))

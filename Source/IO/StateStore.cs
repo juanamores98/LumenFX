@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -80,6 +80,12 @@ namespace LumenFX.IO
         [XmlElement("moonPower")] public float MoonPower { get => _MoonPower; set => _MoonPower = Clamp(value, 0f, 20f); }
         private float _SkyRayleigh = Runtime.TunerRuntime.CurrentState.SkyRayleigh;
         [XmlElement("skyRayleigh")] public float SkyRayleigh { get => _SkyRayleigh; set => _SkyRayleigh = Clamp(value, 0f, 5f); }
+        private float _SkyWaveR = Runtime.TunerRuntime.CurrentState.SkyWaveR;
+        [XmlElement("skyWaveR")] public float SkyWaveR { get => _SkyWaveR; set => _SkyWaveR = Clamp(value, 0f, 1000f); }
+        private float _SkyWaveG = Runtime.TunerRuntime.CurrentState.SkyWaveG;
+        [XmlElement("skyWaveG")] public float SkyWaveG { get => _SkyWaveG; set => _SkyWaveG = Clamp(value, 0f, 1000f); }
+        private float _SkyWaveB = Runtime.TunerRuntime.CurrentState.SkyWaveB;
+        [XmlElement("skyWaveB")] public float SkyWaveB { get => _SkyWaveB; set => _SkyWaveB = Clamp(value, 0f, 1000f); }
         private float _SkyMie = Runtime.TunerRuntime.CurrentState.SkyMie;
         [XmlElement("skyMie")] public float SkyMie { get => _SkyMie; set => _SkyMie = Clamp(value, 0f, 5f); }
 
@@ -124,6 +130,9 @@ namespace LumenFX.IO
             Runtime.TunerRuntime.CurrentState.MoonPower = MoonPower;
             Runtime.TunerRuntime.CurrentState.SkyRayleigh = SkyRayleigh;
             Runtime.TunerRuntime.CurrentState.SkyMie = SkyMie;
+            Runtime.TunerRuntime.CurrentState.SkyWaveR = SkyWaveR;
+            Runtime.TunerRuntime.CurrentState.SkyWaveG = SkyWaveG;
+            Runtime.TunerRuntime.CurrentState.SkyWaveB = SkyWaveB;
             Runtime.TunerRuntime.CurrentState.SkyExposure = SkyExposure;
             Runtime.TunerRuntime.CurrentState.LightingDirty = true;
         }
