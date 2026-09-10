@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using LumenFX.Core;
 
 namespace LumenFX.Runtime
@@ -27,7 +27,8 @@ namespace LumenFX.Runtime
             VanillaSnapshot.Capture();
             LightingMixer.Apply(_state);
             TonemapProfile.Apply(_state);
-            Infrastructure.PropertyLedger.Write(typeof(QualitySettings), "shadows", _state.SoftShadows ? ShadowQuality.All : ShadowQuality.HardOnly);
+            if (_state.OwnsShadowQuality) Infrastructure.PropertyLedger.Write(typeof(QualitySettings), "shadows", _state.SoftShadows ? ShadowQuality.All : ShadowQuality.HardOnly);
+            else Infrastructure.PropertyLedger.Release(typeof(QualitySettings), "shadows");
         }
 
         /// <summary>

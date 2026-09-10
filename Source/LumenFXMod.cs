@@ -78,29 +78,44 @@ namespace LumenFX
                     return string.Empty;
                 }
 
-                // El mezclador y el perfil de tono escriben siempre que el mod esta vivo.
-                string claims = "tone,lightColor,skyTonemapping";
-                if (state.SunPower > 0f || state.LegacySceneLighting || Infrastructure.FxInterop.ClassicRequest("sunStrength")) claims += ",sunIntensity";
-                if (state.MoonPower > 0f) claims += ",moonIntensity";
+                // Se anuncia lo que de verdad se escribe. El anfitrion puede quedarse el
+                // mando del tono o de la curva de luz, y entonces este mod no los toca:
+                // decir que si los toca haria que otro mod de la suite se apartara y al
+                // final no escribiera nadie.
+                var partes = new System.Collections.Generic.List<string>();
+                if (state.OwnsTonemapping) partes.Add("tone");
+                if (state.OwnsDirectLight || state.LegacySceneLighting
+                    || Infrastructure.FxInterop.ClassicRequest("sunColor")) partes.Add("lightColor");
+                if (state.OwnsTonemapping) partes.Add("skyTonemapping");
+                string claims = string.Join(",", partes.ToArray());
+
+                if (state.SunPower > 0f || state.LegacySceneLighting || Infrastructure.FxInterop.ClassicRequest("sunStrength")) claims = Mas(claims, "sunIntensity");
+                if (state.MoonPower > 0f) claims = Mas(claims, "moonIntensity");
 
                 if (Infrastructure.FxInterop.ClassicRequest("sunStrength") || state.SkyExposure > 0f || (state.AdaptiveExposure && !ThemeOwnership.AtmosphereIsManaged))
                 {
-                    claims += ",exposure";
+                    claims = Mas(claims, "exposure");
                 }
 
                 if (state.SkyRayleigh > 0f || state.SkyMie > 0f)
                 {
-                    claims += ",sky";
+                    claims = Mas(claims, "sky");
                 }
 
                 if (!Infrastructure.FxInterop.ClassicRequest("fogTint")
                     && (state.SkyWaveR > 0f || state.SkyWaveG > 0f || state.SkyWaveB > 0f))
                 {
-                    claims += ",waveLengths";
+                    claims = Mas(claims, "waveLengths");
                 }
 
                 return claims;
             }
+        }
+
+        /// <summary>Anade un campo a la lista sin dejar una coma suelta cuando esta vacia.</summary>
+        private static string Mas(string claims, string field)
+        {
+            return claims.Length == 0 ? field : claims + "," + field;
         }
 
         private static bool Claims(string field)

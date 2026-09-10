@@ -76,7 +76,8 @@ namespace LumenFX.Core
             }
 
             VanillaSnapshot.Capture();
-            Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_Tonemapping", state.SkyTonemapping);
+            if (state.OwnsTonemapping) Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_Tonemapping", state.SkyTonemapping);
+            else Infrastructure.PropertyLedger.Release(_cachedDayNight, "m_Tonemapping");
             bool classicPower = Infrastructure.FxInterop.ClassicRequest("sunStrength");
             if (classicPower || !state.AdaptiveExposure) Absolute("m_Exposure", classicPower ? 1f : state.SkyExposure);
             Absolute("m_RayleighScattering", state.SkyRayleigh);
@@ -99,29 +100,39 @@ namespace LumenFX.Core
             EnsureFields();
             VanillaSnapshot.Capture();
 
+            // Tres fuentes pueden reclamar la curva del sol: el aspecto clasico, la escena
+            // heredada y el propio Relight. Si no la reclama ninguna se suelta, porque
+            // remuestrearla a siete instantes la aplana aunque no se le pida ningun cambio.
             Gradient sourceDirect = Infrastructure.PropertyLedger.Baseline<Gradient>(_cachedDayNight, "m_LightColor");
-            if (sourceDirect != null)
+            if (sourceDirect != null && !(classicColor || state.LegacySceneLighting || state.OwnsDirectLight))
             {
-                Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_LightColor", classicColor ? ClassicCurve(sourceDirect) : state.LegacySceneLighting ? LegacyCurve(sourceDirect, state.LegacySceneWarmth) : Resample(sourceDirect, state, true));
+                Infrastructure.PropertyLedger.Release(_cachedDayNight, "m_LightColor");
+            }
+            else if (sourceDirect != null)
+            {
+                Infrastructure.PropertyLedger.Write(_cachedDayNight, "m_LightColor", classicColor ? ClassicCurve(sourceDirect) : Impuesto(state, 0) ?? (state.LegacySceneLighting ? LegacyCurve(sourceDirect, state.LegacySceneWarmth) : Resample(sourceDirect, state, true)));
             }
 
             var ambient = _cachedDayNight.m_AmbientColor;
             Gradient sourceSky = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_SkyColor");
             if (_skyColorField != null && sourceSky != null)
             {
-                Infrastructure.PropertyLedger.Write(ambient, "m_SkyColor", Resample(sourceSky, state, false));
+                if (state.OwnsAmbientLight) Infrastructure.PropertyLedger.Write(ambient, "m_SkyColor", Impuesto(state, 1) ?? Resample(sourceSky, state, false));
+                else Infrastructure.PropertyLedger.Release(ambient, "m_SkyColor");
             }
 
             Gradient sourceEquator = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_EquatorColor");
             if (_equatorColorField != null && sourceEquator != null)
             {
-                Infrastructure.PropertyLedger.Write(ambient, "m_EquatorColor", Resample(sourceEquator, state, false));
+                if (state.OwnsAmbientLight) Infrastructure.PropertyLedger.Write(ambient, "m_EquatorColor", Impuesto(state, 2) ?? Resample(sourceEquator, state, false));
+                else Infrastructure.PropertyLedger.Release(ambient, "m_EquatorColor");
             }
 
             Gradient sourceGround = Infrastructure.PropertyLedger.Baseline<Gradient>(ambient, "m_GroundColor");
             if (_groundColorField != null && sourceGround != null)
             {
-                Infrastructure.PropertyLedger.Write(ambient, "m_GroundColor", Resample(sourceGround, state, false));
+                if (state.OwnsAmbientLight) Infrastructure.PropertyLedger.Write(ambient, "m_GroundColor", Impuesto(state, 3) ?? Resample(sourceGround, state, false));
+                else Infrastructure.PropertyLedger.Release(ambient, "m_GroundColor");
             }
 
             state.LightingDirty = false;
@@ -187,6 +198,13 @@ namespace LumenFX.Core
         {
             if (value > 0f) Infrastructure.PropertyLedger.Write(_cachedDayNight, field, value);
             else Infrastructure.PropertyLedger.Release(_cachedDayNight, field);
+        }
+
+        /// <summary>El degradado que impone el anfitrion en esa ranura, o null si no hay.</summary>
+        private static Gradient Impuesto(LightState state, int slot)
+        {
+            var impuestos = state.LightOverride;
+            return impuestos != null && impuestos.Length == 4 ? impuestos[slot] : null;
         }
 
         private static Gradient Resample(Gradient source, LightState state, bool isDirectLight)

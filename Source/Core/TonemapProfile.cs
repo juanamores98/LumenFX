@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace LumenFX.Core
 {
@@ -31,6 +31,16 @@ namespace LumenFX.Core
             return 1.6f + 0.84f * (brightness - 1f);
         }
 
+        /// <summary>Todo lo que este metodo llega a escribir, para poder soltarlo.</summary>
+        private static readonly string[] Held =
+        {
+            "enabled", "m_ToneMappingGamma", "m_ToneMappingBoostFactor", "m_Luminance",
+            "m_ToneMappingParamsFilmic.A", "m_ToneMappingParamsFilmic.B",
+            "m_ToneMappingParamsFilmic.C", "m_ToneMappingParamsFilmic.D",
+            "m_ToneMappingParamsFilmic.E", "m_ToneMappingParamsFilmic.F",
+            "m_ToneMappingParamsFilmic.W"
+        };
+
         internal static void Apply(LightState state)
         {
             var cameraObject = GameObject.Find("Main Camera");
@@ -45,8 +55,34 @@ namespace LumenFX.Core
                 return;
             }
 
+            if (!state.OwnsTonemapping)
+            {
+                // El perfil no da el mando aqui: se devuelve la curva del juego entera.
+                // Escribirle encima la neutra de este motor lavaria la imagen, que es
+                // justo lo que no debe pasar cuando no se ha pedido nada.
+                foreach (string held in Held)
+                {
+                    Infrastructure.PropertyLedger.Release(toneMap, held);
+                }
+
+                return;
+            }
+
             if (state.ToneEnabled < 0) Infrastructure.PropertyLedger.Release(toneMap, "enabled");
             else Infrastructure.PropertyLedger.Write(toneMap, "enabled", state.ToneEnabled == 1);
+
+            if (state.ToneOverride != null && state.ToneOverride.Length == Held.Length - 1)
+            {
+                // El anfitrion trae su propia calibracion. Se escribe tal cual: mezclarla
+                // con la de este motor daria una tercera que no es la de nadie.
+                for (int i = 1; i < Held.Length; i++)
+                {
+                    Infrastructure.PropertyLedger.Write(toneMap, Held[i], state.ToneOverride[i - 1]);
+                }
+
+                return;
+            }
+
             float b = state.Brightness;
             float c = state.Contrast;
 

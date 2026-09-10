@@ -11,6 +11,40 @@
         public float Ambience = 1f;         // 0..2
         public float Warmth = 0f;           // -1..1, cold..warm
         public bool SkyTonemapping = true;
+
+        // De quien es cada cosa. En true -el valor de siempre, y el que usa LumenFX
+        // suelto- el motor escribe. En false suelta la propiedad y devuelve al juego
+        // lo suyo, que es distinto de escribirle encima el valor neutro del motor.
+        public bool OwnsDirectLight = true;
+        public bool OwnsAmbientLight = true;
+        public bool OwnsTonemapping = true;
+        public bool OwnsShadowQuality = true;
+
+        /// <summary>
+        /// La respuesta de tono que impone quien hospeda al motor, o null para que la
+        /// calcule el motor.
+        /// </summary>
+        /// <remarks>
+        /// Diez numeros, en este orden: gamma, realce, luminancia y los siete de la curva
+        /// filmica -A, B, C, D, E, F y W-. Existe porque un anfitrion puede traer su propia
+        /// calibracion del mismo mando y necesitar que sus recetas guardadas sigan dando la
+        /// misma imagen. LumenFX suelto no lo usa y calcula la suya.
+        /// </remarks>
+        public float[] ToneOverride;
+
+        /// <summary>
+        /// Los cuatro degradados que impone quien hospeda al motor, o null para que los
+        /// calcule el motor.
+        /// </summary>
+        /// <remarks>
+        /// En este orden: luz directa, cielo, ecuador y suelo. Existe porque hay dos formas
+        /// legitimas de gobernar el color del dia y no se pueden mezclar. Este motor parte
+        /// del degradado que trae el mapa y lo desplaza, de modo que un tema con caracter
+        /// lo conserva. Otros anfitriones imponen una rampa absoluta que ignora el mapa.
+        /// Promediarlas daria una tercera que no es la de ninguno, asi que el que manda
+        /// entrega la suya entera. LumenFX suelto no lo usa.
+        /// </remarks>
+        public UnityEngine.Gradient[] LightOverride;
         public int ToneEnabled = -1;
         public bool LegacySceneLighting;
         public float LegacySceneSunMultiplier = 1f;
