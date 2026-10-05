@@ -23,7 +23,7 @@ namespace LumenFX
 
         public string Name
         {
-            get { return "LumenFX v2"; }
+            get { return "LumenFX"; }
         }
 
         public string Description
@@ -151,7 +151,7 @@ namespace LumenFX
             }
 
             UI.UuiButton.Register(
-                "LumenFX v2",
+                "LumenFX",
                 "Lighting, tone and shadow tuner (Ctrl+Alt+L)",
                 UI.TrayIcon.Make(),
                 show => Core.TunerEngine.OpenWindow());
